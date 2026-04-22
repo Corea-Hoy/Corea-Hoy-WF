@@ -6,8 +6,16 @@ import { useLanguage } from "@/lib/LanguageContext";
 import { usePathname } from "next/navigation";
 
 type Step = "select" | "review-ko" | "review-es" | "preview";
-type TargetLang = "es";
 type AdminTab = "create" | "list";
+
+const TRANSLATION_TARGETS = [
+  { code: "es", ko: "스페인어", es: "Español", flag: "🇪🇸" },
+  // 언어 추가 시 아래에 행만 추가하면 됩니다
+  // { code: "pt", ko: "포르투갈어", es: "Português", flag: "🇧🇷" },
+  // { code: "zh", ko: "중국어",     es: "中文",      flag: "🇨🇳" },
+] as const;
+
+type TargetLang = typeof TRANSLATION_TARGETS[number]["code"];
 
 export default function AdminPage() {
   const { language } = useLanguage();
@@ -20,7 +28,7 @@ export default function AdminPage() {
   // 데이터 상태
   const [contentKo, setContentKo] = useState("");
   const [translatedContent, setTranslatedContent] = useState("");
-  const [targetLang] = useState<TargetLang>("es");
+  const [targetLang, setTargetLang] = useState<TargetLang | null>(null);
   
   // 미리보기 전용 상태
   const [previewLang, setPreviewLang] = useState<"ko" | TargetLang>("ko");
@@ -28,6 +36,7 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<AdminTab>("create");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false);
+  const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
 
   const isKo = language === "ko";
@@ -77,9 +86,10 @@ export default function AdminPage() {
       },
       sidebar: {
         title: "워크플로우 제어",
-        runTranslation: "번역 실행 (ES)",
+        runTranslation: "번역 언어 선택",
         translating: "⌛ 번역 중...",
-        translateBtn: "🌎 스페인어로 번역하기",
+        translateBtn: "🌎 번역하기",
+        selectLangHint: "언어를 먼저 선택해주세요",
         checkPreview: "👁 미리보기 확인",
         generating: "⌛ 컨텐츠 생성 중...",
         generateBtn: "🤖 AI 컨텐츠 생성",
@@ -132,9 +142,10 @@ export default function AdminPage() {
       },
       sidebar: {
         title: "Control de Workflow",
-        runTranslation: "Ejecutar Traducción (ES)",
+        runTranslation: "Seleccionar idioma de traducción",
         translating: "⌛ Traduciendo...",
-        translateBtn: "🌎 Traducir al Español",
+        translateBtn: "🌎 Traducir",
+        selectLangHint: "Primero selecciona un idioma",
         checkPreview: "👁 Verificar Vista Previa",
         generating: "⌛ Generando Contenido...",
         generateBtn: "🤖 Generación de Contenido AI",
@@ -173,7 +184,7 @@ export default function AdminPage() {
 
   // 번역 검수 단계 진입 시 미리보기 언어 자동 설정
   useEffect(() => {
-    if (step === "review-es") {
+    if (step === "review-es" && targetLang) {
       setPreviewLang(targetLang);
     }
   }, [step, targetLang]);
@@ -184,6 +195,7 @@ export default function AdminPage() {
     setContentKo("");
     setTranslatedContent("");
     setPreviewLang("ko");
+    setTargetLang(null);
     localStorage.removeItem("coreahoy_draft");
   }
 
@@ -382,7 +394,14 @@ export default function AdminPage() {
               <div style={{ animation: "fadeIn 0.3s" }}>
                 <div style={{ backgroundColor: "#fff", border: "2px solid #000", borderRadius: "24px", padding: "2rem" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-                    <h3 style={{ margin: 0, fontSize: "1.5rem", fontWeight: "900" }}>{UI.review.esTitle}</h3>
+                    <h3 style={{ margin: 0, fontSize: "1.5rem", fontWeight: "900" }}>
+                      {UI.review.esTitle}
+                      {targetLang && (
+                        <span style={{ marginLeft: "0.75rem", fontSize: "0.9rem", fontWeight: "600", color: "#888", background: "#f0f0f0", padding: "0.2rem 0.6rem", borderRadius: "8px" }}>
+                          {TRANSLATION_TARGETS.find(t => t.code === targetLang)?.[isKo ? "ko" : "es"]}
+                        </span>
+                      )}
+                    </h3>
                     <TopActions />
                   </div>
                   <textarea value={translatedContent} onChange={(e) => setTranslatedContent(e.target.value)} placeholder={UI.review.esPlaceholder} style={{ width: "100%", minHeight: "450px", border: "1px solid #eee", borderRadius: "12px", padding: "1.5rem", fontSize: "1.1rem", lineHeight: 1.7, outline: "none", fontFamily: "inherit" }} />
@@ -399,9 +418,11 @@ export default function AdminPage() {
                         <span style={{ backgroundColor: "#000", color: "#fff", padding: "0.4rem 1rem", borderRadius: "8px", fontWeight: "800", fontSize: "0.9rem" }}>PREVIEW</span>
                         <div style={{ display: "flex", border: "1px solid #eee", borderRadius: "12px", overflow: "hidden" }}>
                           <button onClick={() => setPreviewLang("ko")} style={{ padding: "0.5rem 1.25rem", border: "none", background: previewLang === "ko" ? "#000" : "#fff", color: previewLang === "ko" ? "#fff" : "#999", fontWeight: "700", cursor: "pointer" }}>KR</button>
-                          <button onClick={() => setPreviewLang(targetLang)} style={{ padding: "0.5rem 1.25rem", border: "none", background: previewLang === targetLang ? "#000" : "#fff", color: previewLang === targetLang ? "#fff" : "#999", fontWeight: "700", cursor: "pointer" }}>
-                            ES
-                          </button>
+                          {targetLang && (
+                            <button onClick={() => setPreviewLang(targetLang)} style={{ padding: "0.5rem 1.25rem", border: "none", background: previewLang === targetLang ? "#000" : "#fff", color: previewLang === targetLang ? "#fff" : "#999", fontWeight: "700", cursor: "pointer" }}>
+                              {targetLang.toUpperCase()}
+                            </button>
+                          )}
                         </div>
                       </div>
                       <button onClick={() => setStep(translatedContent ? "review-es" : "review-ko")} style={{ background: "none", border: "1px solid #eee", padding: "0.6rem 1.2rem", borderRadius: "12px", cursor: "pointer", fontWeight: "600" }}>{UI.actions.backToEdit}</button>
@@ -451,15 +472,133 @@ export default function AdminPage() {
                 
                 <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
                   {step === "review-ko" && (
-                    <div style={{ borderBottom: "1px solid #eee", paddingBottom: "1rem" }}>
-                      <label style={{ display: "block", fontSize: "0.85rem", color: "#666", fontWeight: "700", marginBottom: "0.5rem" }}>{UI.sidebar.runTranslation}</label>
-                      <button 
-                        onClick={runTranslation} 
-                        disabled={!contentKo || isTranslating}
-                        style={{ width: "100%", backgroundColor: "#000", color: "#fff", border: "none", padding: "1.25rem", borderRadius: "16px", fontWeight: "800", cursor: "pointer", opacity: (!contentKo || isTranslating) ? 0.3 : 1 }}
-                      >
-                        {isTranslating ? UI.sidebar.translating : UI.sidebar.translateBtn}
-                      </button>
+                    <div style={{ borderBottom: "1px solid #eee", paddingBottom: "1.25rem" }}>
+                      <label style={{ display: "block", fontSize: "0.85rem", color: "#666", fontWeight: "700", marginBottom: "0.75rem" }}>
+                        {UI.sidebar.runTranslation}
+                      </label>
+
+                      {/* 드롭다운 + 번역하기 버튼 한 줄 */}
+                      <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+
+                        {/* 언어 드롭다운 */}
+                        <div style={{ position: "relative", flex: 1 }}>
+                          <button
+                            onClick={() => setIsLangDropdownOpen((v) => !v)}
+                            style={{
+                              width: "100%",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              gap: "0.5rem",
+                              padding: "0.7rem 1rem",
+                              borderRadius: "12px",
+                              border: "1px solid #e0e0e0",
+                              background: isLangDropdownOpen ? "#f5f5f5" : "#fff",
+                              cursor: "pointer",
+                              fontSize: "0.9rem",
+                              fontWeight: "700",
+                              color: targetLang ? "#000" : "#aaa",
+                              transition: "all 0.15s",
+                            }}
+                          >
+                            <span style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                              🌐
+                              {targetLang
+                                ? `${TRANSLATION_TARGETS.find(t => t.code === targetLang)?.[isKo ? "ko" : "es"]} (${targetLang.toUpperCase()})`
+                                : (isKo ? "언어 선택" : "Seleccionar")}
+                            </span>
+                            <span style={{
+                              fontSize: "0.65rem",
+                              transform: isLangDropdownOpen ? "rotate(180deg)" : "rotate(0deg)",
+                              transition: "transform 0.2s",
+                              color: "#888",
+                            }}>▼</span>
+                          </button>
+
+                          {isLangDropdownOpen && (
+                            <>
+                              {/* 외부 클릭 닫기 오버레이 */}
+                              <div
+                                style={{ position: "fixed", inset: 0, zIndex: 100 }}
+                                onClick={() => setIsLangDropdownOpen(false)}
+                              />
+                              {/* 드롭다운 패널 */}
+                              <div style={{
+                                position: "absolute",
+                                top: "calc(100% + 6px)",
+                                left: 0,
+                                right: 0,
+                                background: "#fff",
+                                border: "1px solid #e8e8e8",
+                                borderRadius: "14px",
+                                boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
+                                padding: "0.4rem",
+                                zIndex: 101,
+                              }}>
+                                <div style={{ padding: "0.4rem 0.75rem 0.5rem", fontSize: "0.72rem", color: "#bbb", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                                  {isKo ? "번역 언어" : "Idioma"}
+                                </div>
+                                {TRANSLATION_TARGETS.map((lang) => {
+                                  const isSelected = targetLang === lang.code;
+                                  return (
+                                    <button
+                                      key={lang.code}
+                                      onClick={() => { setTargetLang(lang.code); setIsLangDropdownOpen(false); }}
+                                      style={{
+                                        width: "100%",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "space-between",
+                                        padding: "0.65rem 0.75rem",
+                                        border: "none",
+                                        borderRadius: "10px",
+                                        background: isSelected ? "#000" : "transparent",
+                                        color: isSelected ? "#fff" : "#444",
+                                        cursor: "pointer",
+                                        fontSize: "0.9rem",
+                                        fontWeight: isSelected ? "700" : "500",
+                                        textAlign: "left",
+                                        transition: "background 0.12s",
+                                      }}
+                                    >
+                                      <span style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                                        <span>{lang.flag}</span>
+                                        <span>{isKo ? lang.ko : lang.es}</span>
+                                        <span style={{ fontSize: "0.75rem", color: isSelected ? "rgba(255,255,255,0.6)" : "#bbb" }}>
+                                          {lang.code.toUpperCase()}
+                                        </span>
+                                      </span>
+                                      {isSelected && <span style={{ fontSize: "0.8rem" }}>✓</span>}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </>
+                          )}
+                        </div>
+
+                        {/* 번역하기 버튼 */}
+                        <button
+                          onClick={runTranslation}
+                          disabled={!contentKo || isTranslating || !targetLang}
+                          style={{
+                            flexShrink: 0,
+                            padding: "0.7rem 1.1rem",
+                            borderRadius: "12px",
+                            border: "none",
+                            background: "#000",
+                            color: "#fff",
+                            fontWeight: "800",
+                            fontSize: "0.88rem",
+                            cursor: "pointer",
+                            opacity: (!contentKo || isTranslating || !targetLang) ? 0.3 : 1,
+                            whiteSpace: "nowrap",
+                            transition: "opacity 0.2s",
+                          }}
+                        >
+                          {isTranslating ? "⌛" : "🌎"} {isKo ? "번역하기" : "Traducir"}
+                        </button>
+                      </div>
                     </div>
                   )}
 
