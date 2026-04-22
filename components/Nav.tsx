@@ -3,15 +3,17 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { useLanguage } from "@/lib/LanguageContext";
-import { useUser } from "@/lib/UserContext";
+import { useTranslations } from "next-intl";
+import { useLanguageStore } from "@/lib/stores/languageStore";
+import { useUserStore } from "@/lib/stores/userStore";
 import { useState } from "react";
 
 export default function Nav() {
   const pathname = usePathname();
   const router = useRouter();
-  const { language, setLanguage } = useLanguage();
-  const { user, isLoggedIn, logout } = useUser();
+  const t = useTranslations("nav");
+  const { language, setLanguage } = useLanguageStore();
+  const { user, isLoggedIn, logout } = useUserStore();
   const [isLangOpen, setIsLangOpen] = useState(false);
 
   function handleLogout() {
@@ -19,180 +21,193 @@ export default function Nav() {
     router.push("/");
   }
 
-  const LANG_LABELS: Record<typeof language, string> = {
-    ko: "한국어 (KR)",
-    es: "스페인어 (ES)"
-  };
+  const langs = [
+    { code: "ko" as const, label: t("langKo") },
+    { code: "es" as const, label: t("langEs") },
+  ];
 
-  const UI_LABELS: Record<typeof language, { admin: string; logout: string; select: string; labs: string; feedback: string }> = {
-    ko: { admin: "관리자", logout: "로그아웃", select: "언어 선택", labs: "실험실", feedback: "피드백" },
-    es: { admin: "Admin", logout: "Salir", select: "Seleccionar idioma", labs: "Labs", feedback: "Feedback" }
-  };
+  const desktopLinks = [
+    { href: "/admin", label: t("admin") },
+    { href: "/labs", label: `✨ ${t("labs")}` },
+    { href: "/feedback", label: `💬 ${t("feedback")}` },
+  ];
 
-  const isKo = language === "ko";
+  const bottomTabs = [
+    { href: "/", label: t("home"), icon: "🏠" },
+    { href: "/labs", label: t("labs"), icon: "✨" },
+    { href: "/feedback", label: t("feedback"), icon: "💬" },
+    { href: "/admin", label: t("admin"), icon: "⚙️" },
+    { href: isLoggedIn ? "/mypage" : "/login", label: isLoggedIn ? t("mypage") : t("login"), icon: "👤" },
+  ];
+
+  const LangDropdown = ({ align = "right" }: { align?: "right" | "left" }) => (
+    <div className="relative">
+      <button
+        onClick={() => setIsLangOpen(!isLangOpen)}
+        className="flex items-center gap-1.5 px-3 py-2 rounded-full border border-gray-200 text-sm font-bold hover:bg-gray-50 transition-colors cursor-pointer"
+      >
+        🌐 {language.toUpperCase()}
+        <span className={`text-[10px] text-gray-400 transition-transform duration-200 ${isLangOpen ? "rotate-180" : ""}`}>▼</span>
+      </button>
+
+      {isLangOpen && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setIsLangOpen(false)} />
+          <div
+            className={`absolute top-full mt-2 z-50 bg-white border border-gray-100 rounded-2xl shadow-xl min-w-[180px] p-2 ${align === "right" ? "right-0" : "left-0"}`}
+          >
+            <div className="px-3 py-1.5 text-[11px] text-gray-400 font-semibold uppercase tracking-wide">
+              {t("selectLang")}
+            </div>
+            <hr className="my-1 border-gray-100" />
+            {langs.map(({ code, label }) => (
+              <button
+                key={code}
+                onClick={() => { setLanguage(code); setIsLangOpen(false); }}
+                className={`w-full flex justify-between items-center px-3 py-2.5 rounded-xl text-sm transition-colors cursor-pointer ${
+                  language === code ? "bg-black text-white font-bold" : "text-gray-600 hover:bg-gray-50 font-medium"
+                }`}
+              >
+                {label}
+                {language === code && <span className="text-xs">✓</span>}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
 
   return (
-    <nav style={{ borderBottom: "1px solid #eee", padding: "0.75rem 1rem", backgroundColor: "#fff", position: "sticky", top: 0, zIndex: 1000 }}>
-      <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-        <Link 
-          href="/" 
-          style={{ 
-            fontWeight: "800", 
-            fontSize: "1.3rem", 
-            textDecoration: "none", 
-            color: "#000", 
-            display: "flex", 
-            alignItems: "center", 
-            gap: "0.5rem",
-            transition: "opacity 0.2s"
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
-          onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
-        >
-          <Image src="/logo.png" alt="Corea Hoy" width={120} height={48} style={{ objectFit: "contain" }} priority />
-        </Link>
+    <>
+      {/* ─────────────────────────────────────────
+          Desktop GNB  (lg and above)
+      ───────────────────────────────────────── */}
+      <nav className="hidden lg:block sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100">
+        <div className="max-w-screen-xl mx-auto px-6 h-16 flex items-center gap-6">
+          <Link href="/" className="flex items-center hover:opacity-70 transition-opacity flex-shrink-0">
+            <Image
+              src="/logo.png"
+              alt="Corea Hoy"
+              width={120}
+              height={48}
+              style={{ objectFit: "contain" }}
+              priority
+            />
+          </Link>
 
-        {/* Links Section */}
-        <div style={{ display: "flex", gap: "1.5rem", alignItems: "center" }}>
-          <Link href="/admin" style={{ 
-            textDecoration: "none", 
-            color: pathname === "/admin" ? "#000" : "#999",
-            fontSize: "0.95rem",
-            fontWeight: "700"
-          }}>
-            {UI_LABELS[language].admin}
-          </Link>
-          <Link href="/labs" style={{
-            textDecoration: "none",
-            color: pathname === "/labs" ? "#000" : "#999",
-            fontSize: "0.95rem",
-            fontWeight: "700"
-          }}>
-            ✨ {UI_LABELS[language].labs}
-          </Link>
-          <Link href="/feedback" style={{
-            textDecoration: "none",
-            color: pathname === "/feedback" ? "#000" : "#999",
-            fontSize: "0.95rem",
-            fontWeight: "700"
-          }}>
-            💬 {UI_LABELS[language].feedback}
-          </Link>
-        </div>
-        
-        <span style={{ flex: 1 }} />
-        
-        {/* Language Switcher */}
-        <div style={{ position: "relative" }}>
-          <button 
-            onClick={() => setIsLangOpen(!isLangOpen)}
-            style={{ 
-              background: isLangOpen ? "#f5f5f5" : "none", 
-              border: "1px solid #eee", 
-              cursor: "pointer", 
-              display: "flex", 
-              alignItems: "center", 
-              gap: "0.5rem",
-              fontSize: "0.9rem",
-              color: "#000",
-              padding: "0.5rem 1rem",
-              borderRadius: "20px",
-              fontWeight: "700",
-              transition: "all 0.2s"
-            }}
-          >
-            <span style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
-              🌐 {LANG_LABELS[language].match(/\(([^)]+)\)/)?.[1] || language.toUpperCase()}
-            </span>
-            <span style={{ fontSize: "0.7rem", transform: isLangOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>▼</span>
-          </button>
+          <div className="flex items-center gap-5 ml-2">
+            {desktopLinks.map(({ href, label }) => (
+              <Link
+                key={href}
+                href={href}
+                className={`text-sm font-bold transition-colors whitespace-nowrap ${
+                  pathname === href ? "text-black" : "text-gray-400 hover:text-black"
+                }`}
+              >
+                {label}
+              </Link>
+            ))}
+          </div>
 
-          {isLangOpen && (
-            <>
-              <div 
-                style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 1000 }} 
-                onClick={() => setIsLangOpen(false)} 
-              />
-              <div style={{ 
-                position: "absolute", 
-                top: "120%", 
-                right: 0, 
-                backgroundColor: "#fff", 
-                border: "1px solid #eee", 
-                borderRadius: "12px", 
-                boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
-                minWidth: "180px",
-                padding: "0.5rem",
-                zIndex: 1001
-              }}>
-                <div style={{ padding: "0.6rem 0.8rem", fontSize: "0.8rem", color: "#999", fontWeight: "600", textTransform: "uppercase" }}>
-                  {UI_LABELS[language].select}
+          <span className="flex-1" />
+
+          <LangDropdown />
+
+          {isLoggedIn && user ? (
+            <div className="flex items-center gap-3">
+              <Link href="/mypage">
+                <div
+                  className={`w-9 h-9 rounded-full flex items-center justify-center text-lg border-2 transition-all cursor-pointer ${
+                    pathname === "/mypage" ? "border-black" : "border-transparent"
+                  }`}
+                  style={{ backgroundColor: user.avatarColor }}
+                >
+                  {user.avatarEmoji}
                 </div>
-                <div style={{ height: "1px", background: "#f0f0f0", margin: "0.4rem 0" }} />
-                
-                {(Object.keys(LANG_LABELS) as Array<keyof typeof LANG_LABELS>).map((lang) => (
-                  <button 
-                    key={lang}
-                    onClick={() => { setLanguage(lang); setIsLangOpen(false); }}
-                    style={{ 
-                      width: "100%", 
-                      textAlign: "left", 
-                      padding: "0.75rem 1rem", 
-                      background: language === lang ? "#000" : "none", 
-                      color: language === lang ? "#fff" : "#666",
-                      border: "none", 
-                      borderRadius: "8px",
-                      cursor: "pointer",
-                      fontSize: "0.95rem",
-                      fontWeight: language === lang ? "700" : "500",
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center"
-                    }}
-                  >
-                    <span>{LANG_LABELS[lang]}</span>
-                    {language === lang && <span>✓</span>}
-                  </button>
-                ))}
-              </div>
-            </>
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 text-sm font-semibold text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer"
+              >
+                {t("logout")}
+              </button>
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              className="px-4 py-2 text-sm font-semibold text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+            >
+              {t("login")}
+            </Link>
           )}
         </div>
+      </nav>
 
-        {isLoggedIn && user ? (
-          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-            <Link href="/mypage" style={{ textDecoration: "none", display: "flex", alignItems: "center" }}>
-              <div style={{
-                width: 34, height: 34, borderRadius: "50%",
-                background: user.avatarColor,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: "1.1rem", cursor: "pointer",
-                border: pathname === "/mypage" ? "2px solid #000" : "2px solid transparent",
-                transition: "border-color 0.2s",
-              }}>
-                {user.avatarEmoji}
-              </div>
-            </Link>
-            <button
-              onClick={handleLogout}
-              style={{
-                textDecoration: "none", color: "#666", fontSize: "0.95rem",
-                padding: "0.5rem 1rem", border: "1px solid #eee", borderRadius: "12px",
-                fontWeight: "600", background: "#fff", cursor: "pointer",
-              }}
-            >
-              {UI_LABELS[language].logout}
-            </button>
-          </div>
-        ) : (
-          <Link href="/login" style={{
-            textDecoration: "none", color: "#666", fontSize: "0.95rem",
-            padding: "0.5rem 1rem", border: "1px solid #eee", borderRadius: "12px", fontWeight: "600",
-          }}>
-            {language === "ko" ? "로그인" : "Iniciar sesión"}
+      {/* ─────────────────────────────────────────
+          Mobile Top Header  (below lg)
+      ───────────────────────────────────────── */}
+      <header className="lg:hidden sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100">
+        <div className="flex items-center justify-between px-4 h-14">
+          <Link href="/" className="hover:opacity-70 transition-opacity">
+            <Image
+              src="/logo.png"
+              alt="Corea Hoy"
+              width={96}
+              height={38}
+              style={{ objectFit: "contain" }}
+              priority
+            />
           </Link>
-        )}
-      </div>
-    </nav>
+          <div className="flex items-center gap-2">
+            <LangDropdown align="right" />
+            {isLoggedIn && user ? (
+              <Link href="/mypage">
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-base border-2 cursor-pointer ${
+                    pathname === "/mypage" ? "border-black" : "border-transparent"
+                  }`}
+                  style={{ backgroundColor: user.avatarColor }}
+                >
+                  {user.avatarEmoji}
+                </div>
+              </Link>
+            ) : (
+              <Link
+                href="/login"
+                className="px-3 py-1.5 text-xs font-semibold text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+              >
+                {t("login")}
+              </Link>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {/* ─────────────────────────────────────────
+          Mobile Bottom Tab Bar  (below lg)
+      ───────────────────────────────────────── */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100">
+        <div className="flex items-center justify-around h-16 pb-safe">
+          {bottomTabs.map(({ href, label, icon }) => {
+            const isActive = href === "/" ? pathname === "/" : pathname.startsWith(href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                className="flex flex-col items-center gap-0.5 flex-1 py-2 min-w-0"
+              >
+                <span className={`text-xl leading-none transition-opacity ${isActive ? "opacity-100" : "opacity-35"}`}>
+                  {icon}
+                </span>
+                <span className={`text-[9px] font-semibold truncate max-w-full px-1 transition-colors ${isActive ? "text-black" : "text-gray-400"}`}>
+                  {label}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+    </>
   );
 }

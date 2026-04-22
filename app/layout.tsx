@@ -1,29 +1,25 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Nav from "@/components/Nav";
-import { LanguageProvider } from "@/lib/LanguageContext";
-import { UserProvider } from "@/lib/UserContext";
+import IntlProvider from "@/lib/IntlProvider";
 
 export const metadata: Metadata = {
   title: "Corea Hoy",
   description: "Noticias de Corea en español para Latinoamérica",
-  icons: {
-    icon: "/logo.png",
-  },
+  icons: { icon: "/logo.png" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko">
       <body>
-        <LanguageProvider>
-          <UserProvider>
-            <Nav />
-            <main style={{ maxWidth: 1200, margin: "0 auto", padding: "1rem" }}>
-              {children}
-            </main>
-          </UserProvider>
-        </LanguageProvider>
+        <IntlProvider>
+          <Nav />
+          {/* pb-24 on mobile accounts for the fixed bottom tab bar */}
+          <main className="max-w-screen-xl mx-auto px-4 pb-24 lg:pb-12">
+            {children}
+          </main>
+        </IntlProvider>
       </body>
     </html>
   );

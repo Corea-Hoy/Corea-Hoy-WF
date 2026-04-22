@@ -2,162 +2,170 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { useTranslations } from "next-intl";
+import { useLanguageStore } from "@/lib/stores/languageStore";
 import { MOCK_CONTENTS, type Category } from "@/lib/mock-data";
-import { useLanguage } from "@/lib/LanguageContext";
 
 const CATEGORIES: (Category | "전체")[] = ["전체", "K-POP", "드라마", "뉴스", "문화", "스포츠", "음식"];
-const CATEGORIES_ES: (string)[] = ["Todos", "K-POP", "Drama", "Noticias", "Cultura", "Deportes", "Comida"];
+const CATEGORIES_ES: string[] = ["Todos", "K-POP", "Drama", "Noticias", "Cultura", "Deportes", "Comida"];
 
 export default function MainPage() {
-  const { language } = useLanguage();
+  const t = useTranslations("home");
+  const { language } = useLanguageStore();
+  const isKo = language === "ko";
+
   const [activeCategory, setActiveCategory] = useState<Category | "전체">("전체");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const isKo = language === "ko";
-
   const filtered = MOCK_CONTENTS.filter((c) => {
     const matchesCategory = activeCategory === "전체" || c.category === activeCategory;
-    const matchesSearch = (isKo ? c.title : c.titleEs).toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          (isKo ? c.summary : c.summaryEs).toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch =
+      (isKo ? c.title : c.titleEs).toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (isKo ? c.summary : c.summaryEs).toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 
+  const trending = [...MOCK_CONTENTS].sort((a, b) => b.likes - a.likes).slice(0, 3);
+
   return (
-    <div style={{ maxWidth: 1200, margin: "0 auto", padding: "2rem 1rem" }}>
-      {/* Title */}
-      <h1 style={{
-        fontSize: "2.5rem",
-        fontWeight: "800",
-        color: "#000",
-        marginBottom: "1.5rem"
-      }}>
-        {isKo ? "뉴스레터" : "Ediciones"}
-      </h1>
+    <div className="py-6 md:py-10">
+      {/* ── Desktop: two-column layout ── */}
+      <div className="lg:grid lg:grid-cols-[1fr_280px] lg:gap-10">
 
-      {/* Search Bar */}
-      <div style={{ position: "relative", marginBottom: "2rem" }}>
-        <span style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "#666" }}>🔍</span>
-        <input
-          type="text"
-          placeholder={isKo ? "기사 검색..." : "Pesquisar posts..."}
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          style={{
-            width: "100%",
-            padding: "1rem 1rem 1rem 3rem",
-            borderRadius: "12px",
-            border: "1px solid #eee",
-            backgroundColor: "#f9f9f9",
-            fontSize: "1rem",
-            outline: "none"
-          }}
-        />
-      </div>
+        {/* ── Main column ── */}
+        <div>
+          <h1 className="text-3xl md:text-4xl font-extrabold text-black mb-6">{t("title")}</h1>
 
-      {/* Category Chips */}
-      <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginBottom: "3rem" }}>
-        {CATEGORIES.map((cat, i) => (
-          <button
-            key={cat}
-            onClick={() => setActiveCategory(cat)}
-            style={{
-              padding: "0.5rem 1.25rem",
-              borderRadius: "20px",
-              border: "1px solid #eee",
-              background: activeCategory === cat ? "#000" : "#fff",
-              color: activeCategory === cat ? "#fff" : "#666",
-              cursor: "pointer",
-              fontSize: "0.9rem",
-              fontWeight: "600",
-              transition: "all 0.2s"
-            }}
-          >
-            {isKo ? cat : CATEGORIES_ES[i]}
-          </button>
-        ))}
-      </div>
+          {/* Search */}
+          <div className="relative mb-5">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">🔍</span>
+            <input
+              type="text"
+              placeholder={t("search")}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm outline-none focus:border-black transition-colors"
+            />
+          </div>
 
-      {/* Grid Layout */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-        gap: "2rem"
-      }}>
-        {filtered.length === 0 && (
-          <p style={{ color: "#999", gridColumn: "1 / -1", textAlign: "center", padding: "5rem 0" }}>
-            {isKo ? "검색 결과가 없습니다." : "No se encontraron resultados."}
-          </p>
-        )}
-        {filtered.map((content) => (
-          <Link
-            key={content.id}
-            href={`/content/${content.id}`}
-            style={{ textDecoration: "none", color: "inherit" }}
-          >
-            <div style={{
-              borderRadius: "16px",
-              border: "1px solid #eee",
-              overflow: "hidden",
-              transition: "transform 0.2s, box-shadow 0.2s",
-              cursor: "pointer",
-              backgroundColor: "#fff",
-              display: "flex",
-              flexDirection: "column",
-              height: "100%"
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateY(-4px)";
-              e.currentTarget.style.boxShadow = "0 10px 25px rgba(0,0,0,0.05)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "none";
-            }}
-            >
-              {/* Card Image */}
-              <div style={{ position: "relative", height: "200px", width: "100%" }}>
-                <img
-                  src={`https://picsum.photos/seed/${content.id}/600/400`}
-                  alt={content.title}
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                />
-                <div style={{
-                  position: "absolute",
-                  top: "1rem",
-                  left: "1rem",
-                  backgroundColor: "#000",
-                  color: "#fff",
-                  padding: "0.25rem 0.6rem",
-                  borderRadius: "6px",
-                  fontSize: "0.75rem",
-                  fontWeight: "700"
-                }}>
-                  {content.category}
+          {/* Category chips — mobile only (desktop uses sidebar) */}
+          <div className="flex gap-2 flex-wrap mb-7 lg:hidden">
+            {CATEGORIES.map((cat, i) => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`px-3.5 py-1.5 rounded-full border text-sm font-semibold transition-all cursor-pointer ${
+                  activeCategory === cat
+                    ? "bg-black text-white border-black"
+                    : "bg-white text-gray-500 border-gray-200 hover:border-gray-400"
+                }`}
+              >
+                {isKo ? cat : CATEGORIES_ES[i]}
+              </button>
+            ))}
+          </div>
+
+          {/* Article grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {filtered.length === 0 && (
+              <p className="col-span-full text-center text-gray-400 py-20 text-sm">
+                {t("noResults")}
+              </p>
+            )}
+            {filtered.map((content) => (
+              <Link
+                key={content.id}
+                href={`/content/${content.id}`}
+                className="group block rounded-2xl border border-gray-100 overflow-hidden bg-white hover:-translate-y-1 hover:shadow-lg transition-all duration-200"
+              >
+                {/* Card image */}
+                <div className="relative h-48 w-full">
+                  <Image
+                    src={`https://picsum.photos/seed/${content.id}/600/400`}
+                    alt={content.title}
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 40vw"
+                    className="object-cover"
+                  />
+                  <div className="absolute top-3 left-3 bg-black text-white text-xs font-bold px-2 py-1 rounded">
+                    {content.category}
+                  </div>
                 </div>
-              </div>
 
-              {/* Card Content */}
-              <div style={{
-                padding: "1.5rem",
-                backgroundColor: "#fff",
-                flex: 1,
-                display: "flex",
-                flexDirection: "column",
-                gap: "0.5rem"
-              }}>
-                <div style={{ fontSize: "0.85rem", color: "#999", fontWeight: "600" }}>
-                  {content.publishedAt}
+                {/* Card body */}
+                <div className="p-5 flex flex-col gap-2">
+                  <div className="text-xs text-gray-400 font-semibold">{content.publishedAt}</div>
+                  <h2 className="text-base font-bold leading-snug text-black line-clamp-2">
+                    {isKo ? content.title : content.titleEs}
+                  </h2>
+                  <p className="text-sm text-gray-400 italic line-clamp-2">
+                    {isKo ? content.summary : content.summaryEs}
+                  </p>
+                  <div className="flex items-center gap-1 mt-1 text-xs text-gray-400">
+                    <span>♥</span>
+                    <span>{content.likes}</span>
+                  </div>
                 </div>
-                <h2 style={{ margin: 0, fontSize: "1.2rem", fontWeight: "700", lineHeight: 1.3, color: "#000" }}>
-                  {isKo ? content.title : content.titleEs}
-                </h2>
-                <p style={{ margin: "0.25rem 0", fontSize: "0.9rem", color: "#888", fontStyle: "italic" }}>
-                  {isKo ? content.summary : content.summaryEs}
-                </p>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Sidebar — desktop only ── */}
+        <aside className="hidden lg:block">
+          <div className="sticky top-24 space-y-8">
+
+            {/* Category filter */}
+            <div>
+              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
+                {t("categories")}
+              </h3>
+              <div className="flex flex-col gap-1">
+                {CATEGORIES.map((cat, i) => (
+                  <button
+                    key={cat}
+                    onClick={() => setActiveCategory(cat)}
+                    className={`text-left px-4 py-2 rounded-xl text-sm font-semibold transition-colors cursor-pointer ${
+                      activeCategory === cat
+                        ? "bg-black text-white"
+                        : "text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    {isKo ? cat : CATEGORIES_ES[i]}
+                  </button>
+                ))}
               </div>
             </div>
-          </Link>
-        ))}
+
+            {/* Trending */}
+            <div>
+              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
+                {t("trending")}
+              </h3>
+              <div className="flex flex-col gap-3">
+                {trending.map((c, idx) => (
+                  <Link
+                    key={c.id}
+                    href={`/content/${c.id}`}
+                    className="group flex gap-3 items-start p-3 rounded-xl hover:bg-gray-50 transition-colors"
+                  >
+                    <span className="text-xl font-black text-gray-200 leading-none flex-shrink-0">
+                      {idx + 1}
+                    </span>
+                    <div>
+                      <p className="text-sm font-semibold text-black leading-snug line-clamp-2 group-hover:underline">
+                        {isKo ? c.title : c.titleEs}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">♥ {c.likes}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+          </div>
+        </aside>
       </div>
     </div>
   );

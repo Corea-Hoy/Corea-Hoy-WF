@@ -3,8 +3,11 @@
 import { useState } from "react";
 import { useParams, notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
+import { useTranslations } from "next-intl";
+import { useLanguageStore } from "@/lib/stores/languageStore";
+import { useUserStore } from "@/lib/stores/userStore";
 import { MOCK_CONTENTS, MOCK_USER } from "@/lib/mock-data";
-import { useLanguage } from "@/lib/LanguageContext";
 
 const SHARE_PLATFORMS = [
   {
@@ -12,7 +15,7 @@ const SHARE_PLATFORMS = [
     label: "X",
     color: "#000",
     icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
         <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.259 5.63 5.905-5.63zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
       </svg>
     ),
@@ -24,7 +27,7 @@ const SHARE_PLATFORMS = [
     label: "Facebook",
     color: "#1877f2",
     icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
         <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
       </svg>
     ),
@@ -36,7 +39,7 @@ const SHARE_PLATFORMS = [
     label: "WhatsApp",
     color: "#25d366",
     icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
         <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
       </svg>
     ),
@@ -48,7 +51,7 @@ const SHARE_PLATFORMS = [
     label: "Telegram",
     color: "#229ed9",
     icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
         <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
       </svg>
     ),
@@ -58,11 +61,18 @@ const SHARE_PLATFORMS = [
 ];
 
 export default function ContentDetailPage() {
-  const { language } = useLanguage();
+  const t = useTranslations("content");
+  const { language } = useLanguageStore();
+  const { user } = useUserStore();
   const { id } = useParams<{ id: string }>();
+
   const content = MOCK_CONTENTS.find((c) => c.id === id);
   if (!content) return notFound();
 
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const isKo = language === "ko";
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const [liked, setLiked] = useState(MOCK_USER.likedContentIds.includes(id));
   const [likeCount, setLikeCount] = useState(content.likes);
   const [commentText, setCommentText] = useState("");
@@ -84,12 +94,8 @@ export default function ContentDetailPage() {
       await navigator.clipboard.writeText(getPageUrl());
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch {
-      setCopied(false);
-    }
+    } catch { setCopied(false); }
   }
-
-  const isKo = language === "ko";
 
   function toggleLike() {
     setLiked((prev) => {
@@ -105,8 +111,8 @@ export default function ContentDetailPage() {
       ...prev,
       {
         id: `cm${Date.now()}`,
-        userId: MOCK_USER.id,
-        userName: MOCK_USER.name,
+        userId: user?.name ?? MOCK_USER.id,
+        userName: user?.name ?? MOCK_USER.name,
         body: commentText,
         createdAt: new Date().toISOString().slice(0, 10),
       },
@@ -115,216 +121,160 @@ export default function ContentDetailPage() {
   }
 
   return (
-    <article style={{ maxWidth: "700px", margin: "0 auto", paddingBottom: "4rem" }}>
-      <div style={{ marginBottom: "2rem" }}>
-        <Link href="/" style={{ textDecoration: "none", color: "#666", display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.95rem" }}>
-          <span>←</span> {isKo ? "뒤로 가기" : "Volver"}
-        </Link>
+    <article className="py-6 md:py-10">
+      {/* Back */}
+      <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-black transition-colors mb-6">
+        <span>←</span> {t("back")}
+      </Link>
+
+      {/* Cover image */}
+      <div className="relative w-full h-56 md:h-80 rounded-2xl overflow-hidden mb-6">
+        <Image
+          src={`https://picsum.photos/seed/${content.id}/1200/600`}
+          alt={content.title}
+          fill
+          sizes="(max-width: 768px) 100vw, 800px"
+          className="object-cover"
+          priority
+        />
       </div>
 
-      {/* 헤더 */}
-      <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", marginBottom: "1rem" }}>
-        <span style={{ 
-          backgroundColor: "#f0f0f0", 
-          padding: "0.2rem 0.6rem", 
-          borderRadius: "4px",
-          fontSize: "0.8rem",
-          fontWeight: "600",
-          color: "#555"
-        }}>{content.category}</span>
-        <span style={{ color: "#999", fontSize: "0.85rem" }}>{content.publishedAt}</span>
-      </div>
-
-      <h1 style={{ marginTop: 0, fontSize: "2.2rem", fontWeight: "800", lineHeight: 1.3 }}>
-        {isKo ? content.title : content.titleEs}
-      </h1>
-      <p style={{ color: "#666", fontSize: "1.1rem", fontStyle: "italic", marginBottom: "2rem" }}>
-        {isKo ? content.summary : content.summaryEs}
-      </p>
-
-      <hr style={{ border: "none", borderTop: "1px solid #eee", margin: "2rem 0" }} />
-
-      {/* 본문 */}
-      <section>
-        <div style={{ 
-          fontFamily: "inherit", 
-          whiteSpace: "pre-wrap", 
-          lineHeight: 1.8, 
-          fontSize: "1.1rem", 
-          color: "#333" 
-        }}>
-          {isKo ? content.body : content.bodyEs}
+      <div className="max-w-3xl mx-auto">
+        {/* Meta */}
+        <div className="flex items-center gap-3 mb-3">
+          <span className="bg-gray-100 text-gray-600 text-xs font-bold px-2.5 py-1 rounded">
+            {content.category}
+          </span>
+          <span className="text-sm text-gray-400">{content.publishedAt}</span>
         </div>
-      </section>
 
-      {/* 문화 설명 */}
-      <section style={{ 
-        border: "none", 
-        padding: "1.5rem", 
-        margin: "3rem 0", 
-        background: "#fdf8ec", 
-        borderRadius: "16px",
-        borderLeft: "4px solid #f0a500"
-      }}>
-        <strong style={{ fontSize: "1.1rem", color: "#b57c00", display: "block", marginBottom: "0.5rem" }}>
-          📚 {isKo ? "문화 설명" : "Contexto cultural"}
-        </strong>
-        <p style={{ margin: 0, lineHeight: 1.6, color: "#5c430d" }}>
-          {isKo ? content.culturalNote : content.culturalNoteEs}
+        <h1 className="text-2xl md:text-3xl font-black leading-snug mb-3">
+          {isKo ? content.title : content.titleEs}
+        </h1>
+        <p className="text-base text-gray-500 italic mb-6 leading-relaxed">
+          {isKo ? content.summary : content.summaryEs}
         </p>
-      </section>
 
-      {/* 출처 */}
-      <section style={{ marginBottom: "3rem" }}>
-        <strong style={{ display: "block", marginBottom: "1rem", fontSize: "1rem" }}>
-          {isKo ? "출처" : "Fuentes"}
-        </strong>
-        <ul style={{ paddingLeft: "1.2rem", color: "#666" }}>
-          {content.sources.map((s, i) => (
-            <li key={i} style={{ marginBottom: "0.5rem" }}>
-              <a href={s.url} target="_blank" rel="noopener noreferrer" style={{ color: "#0070f3" }}>{s.title}</a>
-            </li>
-          ))}
-        </ul>
-      </section>
+        <hr className="border-gray-100 mb-6" />
 
-      <hr style={{ border: "none", borderTop: "1px solid #eee", margin: "2rem 0" }} />
+        {/* Body */}
+        <section className="text-base leading-8 text-gray-700 whitespace-pre-wrap mb-8">
+          {isKo ? content.body : content.bodyEs}
+        </section>
 
-      {/* 좋아요 */}
-      <div style={{ display: "flex", alignItems: "center", gap: "1rem", margin: "2rem 0" }}>
-        <button
-          onClick={toggleLike}
-          style={{
-            border: "1px solid #ffeded",
-            padding: "0.6rem 1.2rem",
-            borderRadius: "30px",
-            background: liked ? "#ff4d4f" : "#fff5f5",
-            color: liked ? "#fff" : "#ff4d4f",
-            cursor: "pointer",
-            fontWeight: "600",
-            fontSize: "1rem",
-            display: "flex",
-            alignItems: "center",
-            gap: "0.5rem",
-            transition: "all 0.2s"
-          }}
-        >
-          <span>♥</span> {likeCount}
-        </button>
-        <span style={{ color: "#888", fontSize: "0.95rem" }}>
-          {liked 
-            ? (isKo ? "좋아요를 눌렀습니다!" : "¡Te gusta esto!") 
-            : (isKo ? "이 글이 도움이 되었나요?" : "¿Te gustó este artículo?")}
-        </span>
-      </div>
+        {/* Cultural note */}
+        <section className="bg-amber-50 border-l-4 border-amber-400 rounded-r-2xl px-5 py-4 mb-8">
+          <strong className="block text-amber-700 text-base font-bold mb-2">
+            📚 {t("culturalNote")}
+          </strong>
+          <p className="text-sm text-amber-800 leading-relaxed m-0">
+            {isKo ? content.culturalNote : content.culturalNoteEs}
+          </p>
+        </section>
 
-      {/* 공유 */}
-      <div style={{ margin: "2rem 0", display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
-        <span style={{ fontSize: "0.9rem", fontWeight: "700", color: "#555" }}>
-          {isKo ? "공유하기" : "Compartir"}
-        </span>
+        {/* Sources */}
+        <section className="mb-8">
+          <strong className="block text-sm font-bold mb-3">{t("sources")}</strong>
+          <ul className="list-disc list-inside space-y-1.5">
+            {content.sources.map((s, i) => (
+              <li key={i} className="text-sm">
+                <a
+                  href={s.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-500 hover:underline"
+                >
+                  {s.title}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
 
-        {SHARE_PLATFORMS.map((platform) => (
+        <hr className="border-gray-100 mb-6" />
+
+        {/* Like */}
+        <div className="flex items-center gap-4 mb-6">
           <button
-            key={platform.key}
-            onClick={() => handleShare(platform)}
-            title={platform.label}
-            style={{
-              width: 38, height: 38,
-              borderRadius: "50%",
-              border: "none",
-              background: platform.color,
-              color: "#fff",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              transition: "opacity 0.2s, transform 0.15s",
-              flexShrink: 0,
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.82"; e.currentTarget.style.transform = "scale(1.1)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.transform = "scale(1)"; }}
+            onClick={toggleLike}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-semibold text-sm transition-all cursor-pointer border ${
+              liked
+                ? "bg-red-500 text-white border-red-500"
+                : "bg-red-50 text-red-500 border-red-100 hover:bg-red-100"
+            }`}
           >
-            {platform.icon}
+            <span>♥</span> {likeCount}
           </button>
-        ))}
-
-        <button
-          onClick={handleCopyLink}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.4rem",
-            padding: "0 1rem",
-            height: 38,
-            borderRadius: "20px",
-            border: "1px solid #eee",
-            background: copied ? "#f0fdf4" : "#fff",
-            color: copied ? "#16a34a" : "#555",
-            cursor: "pointer",
-            fontSize: "0.85rem",
-            fontWeight: "600",
-            transition: "all 0.2s",
-            flexShrink: 0,
-          }}
-        >
-          {copied ? (
-            <><span>✓</span> {isKo ? "복사됨!" : "¡Copiado!"}</>
-          ) : (
-            <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> {isKo ? "링크 복사" : "Copiar enlace"}</>
-          )}
-        </button>
-      </div>
-
-      {/* 댓글 */}
-      <section style={{ marginTop: "4rem" }}>
-        <h3 style={{ fontSize: "1.3rem", fontWeight: "700", marginBottom: "1.5rem" }}>
-          💬 {isKo ? "댓글" : "Comentarios"} ({comments.length})
-        </h3>
-        <form onSubmit={submitComment} style={{ display: "flex", gap: "0.75rem", marginBottom: "2rem" }}>
-          <input
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-            placeholder={isKo ? "댓글을 입력하세요..." : "Escribe un comentario..."}
-            style={{ 
-              flex: 1, 
-              border: "1px solid #eee", 
-              padding: "0.8rem 1rem", 
-              borderRadius: "12px",
-              outline: "none",
-              fontSize: "0.95rem"
-            }}
-          />
-          <button type="submit" style={{ 
-            backgroundColor: "#000", 
-            color: "#fff", 
-            padding: "0.8rem 1.5rem", 
-            borderRadius: "12px", 
-            border: "none",
-            cursor: "pointer",
-            fontWeight: "600",
-            transition: "opacity 0.2s"
-          }}>
-            {isKo ? "등록" : "Enviar"}
-          </button>
-        </form>
-        <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-          {comments.map((c) => (
-            <div key={c.id} style={{ borderBottom: "1px solid #f9f9f9", paddingBottom: "1rem" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.4rem" }}>
-                <strong style={{ fontSize: "0.95rem" }}>{c.userName}</strong>
-                <span style={{ color: "#ccc", fontSize: "0.8rem" }}>{c.createdAt}</span>
-              </div>
-              <p style={{ margin: 0, color: "#444", lineHeight: 1.5 }}>{c.body}</p>
-            </div>
-          ))}
-          {comments.length === 0 && (
-            <p style={{ color: "#999", textAlign: "center", padding: "2rem 0" }}>
-              {isKo ? "첫 번째 댓글을 남겨보세요." : "Aún no hay comentarios."}
-            </p>
-          )}
+          <span className="text-sm text-gray-400">
+            {liked ? t("likedThis") : t("likePrompt")}
+          </span>
         </div>
-      </section>
+
+        {/* Share */}
+        <div className="flex items-center gap-2 flex-wrap mb-10">
+          <span className="text-sm font-bold text-gray-600">{t("share")}</span>
+          {SHARE_PLATFORMS.map((platform) => (
+            <button
+              key={platform.key}
+              onClick={() => handleShare(platform)}
+              title={platform.label}
+              className="w-9 h-9 rounded-full flex items-center justify-center text-white cursor-pointer hover:opacity-80 hover:scale-110 transition-all flex-shrink-0"
+              style={{ backgroundColor: platform.color }}
+            >
+              {platform.icon}
+            </button>
+          ))}
+          <button
+            onClick={handleCopyLink}
+            className={`flex items-center gap-1.5 px-4 h-9 rounded-full border text-xs font-semibold transition-all cursor-pointer flex-shrink-0 ${
+              copied
+                ? "bg-green-50 text-green-600 border-green-200"
+                : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
+            }`}
+          >
+            {copied ? (
+              <><span>✓</span> {t("copied")}</>
+            ) : (
+              <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> {t("copyLink")}</>
+            )}
+          </button>
+        </div>
+
+        {/* Comments */}
+        <section>
+          <h3 className="text-xl font-bold mb-5">
+            💬 {t("comments")} ({comments.length})
+          </h3>
+          <form onSubmit={submitComment} className="flex gap-2.5 mb-6">
+            <input
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              placeholder={t("commentPlaceholder")}
+              className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-black transition-colors"
+            />
+            <button
+              type="submit"
+              className="px-5 py-2.5 bg-black text-white rounded-xl text-sm font-bold cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0"
+            >
+              {t("submit")}
+            </button>
+          </form>
+          <div className="space-y-4">
+            {comments.map((c) => (
+              <div key={c.id} className="border-b border-gray-50 pb-4">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <strong className="text-sm">{c.userName}</strong>
+                  <span className="text-xs text-gray-300">{c.createdAt}</span>
+                </div>
+                <p className="text-sm text-gray-600 leading-relaxed m-0">{c.body}</p>
+              </div>
+            ))}
+            {comments.length === 0 && (
+              <p className="text-center text-gray-300 py-10 text-sm">{t("firstComment")}</p>
+            )}
+          </div>
+        </section>
+      </div>
     </article>
   );
 }
