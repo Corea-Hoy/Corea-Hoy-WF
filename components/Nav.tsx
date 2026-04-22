@@ -1,30 +1,39 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Image from "next/image";
+import { usePathname, useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/LanguageContext";
+import { useUser } from "@/lib/UserContext";
 import { useState } from "react";
 
 export default function Nav() {
   const pathname = usePathname();
+  const router = useRouter();
   const { language, setLanguage } = useLanguage();
+  const { user, isLoggedIn, logout } = useUser();
   const [isLangOpen, setIsLangOpen] = useState(false);
+
+  function handleLogout() {
+    logout();
+    router.push("/");
+  }
 
   const LANG_LABELS: Record<typeof language, string> = {
     ko: "한국어 (KR)",
     es: "스페인어 (ES)"
   };
 
-  const UI_LABELS: Record<typeof language, { admin: string; logout: string; select: string; labs: string }> = {
-    ko: { admin: "관리자", logout: "로그아웃", select: "언어 선택", labs: "실험실" },
-    es: { admin: "Admin", logout: "Salir", select: "Seleccionar idioma", labs: "Labs" }
+  const UI_LABELS: Record<typeof language, { admin: string; logout: string; select: string; labs: string; feedback: string }> = {
+    ko: { admin: "관리자", logout: "로그아웃", select: "언어 선택", labs: "실험실", feedback: "피드백" },
+    es: { admin: "Admin", logout: "Salir", select: "Seleccionar idioma", labs: "Labs", feedback: "Feedback" }
   };
 
   const isKo = language === "ko";
 
   return (
     <nav style={{ borderBottom: "1px solid #eee", padding: "0.75rem 1rem", backgroundColor: "#fff", position: "sticky", top: 0, zIndex: 1000 }}>
-      <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", alignItems: "center", gap: "1.5rem" }}>
+      <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", alignItems: "center", gap: "0.5rem" }}>
         <Link 
           href="/" 
           style={{ 
@@ -40,11 +49,11 @@ export default function Nav() {
           onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
           onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
         >
-          Corea Hoy
+          <Image src="/logo.png" alt="Corea Hoy" width={120} height={48} style={{ objectFit: "contain" }} priority />
         </Link>
 
         {/* Links Section */}
-        <div style={{ display: "flex", gap: "1.5rem", alignItems: "center", marginLeft: "1rem" }}>
+        <div style={{ display: "flex", gap: "1.5rem", alignItems: "center" }}>
           <Link href="/admin" style={{ 
             textDecoration: "none", 
             color: pathname === "/admin" ? "#000" : "#999",
@@ -53,13 +62,21 @@ export default function Nav() {
           }}>
             {UI_LABELS[language].admin}
           </Link>
-          <Link href="/labs" style={{ 
-            textDecoration: "none", 
+          <Link href="/labs" style={{
+            textDecoration: "none",
             color: pathname === "/labs" ? "#000" : "#999",
             fontSize: "0.95rem",
             fontWeight: "700"
           }}>
             ✨ {UI_LABELS[language].labs}
+          </Link>
+          <Link href="/feedback" style={{
+            textDecoration: "none",
+            color: pathname === "/feedback" ? "#000" : "#999",
+            fontSize: "0.95rem",
+            fontWeight: "700"
+          }}>
+            💬 {UI_LABELS[language].feedback}
           </Link>
         </div>
         
@@ -142,17 +159,39 @@ export default function Nav() {
           )}
         </div>
 
-        <Link href="/login" style={{ 
-          textDecoration: "none", 
-          color: "#666",
-          fontSize: "0.95rem",
-          padding: "0.5rem 1rem",
-          border: "1px solid #eee",
-          borderRadius: "12px",
-          fontWeight: "600"
-        }}>
-          {UI_LABELS[language].logout}
-        </Link>
+        {isLoggedIn && user ? (
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+            <Link href="/mypage" style={{ textDecoration: "none", display: "flex", alignItems: "center" }}>
+              <div style={{
+                width: 34, height: 34, borderRadius: "50%",
+                background: user.avatarColor,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: "1.1rem", cursor: "pointer",
+                border: pathname === "/mypage" ? "2px solid #000" : "2px solid transparent",
+                transition: "border-color 0.2s",
+              }}>
+                {user.avatarEmoji}
+              </div>
+            </Link>
+            <button
+              onClick={handleLogout}
+              style={{
+                textDecoration: "none", color: "#666", fontSize: "0.95rem",
+                padding: "0.5rem 1rem", border: "1px solid #eee", borderRadius: "12px",
+                fontWeight: "600", background: "#fff", cursor: "pointer",
+              }}
+            >
+              {UI_LABELS[language].logout}
+            </button>
+          </div>
+        ) : (
+          <Link href="/login" style={{
+            textDecoration: "none", color: "#666", fontSize: "0.95rem",
+            padding: "0.5rem 1rem", border: "1px solid #eee", borderRadius: "12px", fontWeight: "600",
+          }}>
+            {language === "ko" ? "로그인" : "Iniciar sesión"}
+          </Link>
+        )}
       </div>
     </nav>
   );

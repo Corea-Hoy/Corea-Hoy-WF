@@ -25,10 +25,10 @@ export default function MainPage() {
   return (
     <div style={{ maxWidth: 1200, margin: "0 auto", padding: "2rem 1rem" }}>
       {/* Title */}
-      <h1 style={{ 
-        fontSize: "2.5rem", 
-        fontWeight: "800", 
-        color: "#000", 
+      <h1 style={{
+        fontSize: "2.5rem",
+        fontWeight: "800",
+        color: "#000",
         marginBottom: "1.5rem"
       }}>
         {isKo ? "뉴스레터" : "Ediciones"}
@@ -37,16 +37,16 @@ export default function MainPage() {
       {/* Search Bar */}
       <div style={{ position: "relative", marginBottom: "2rem" }}>
         <span style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "#666" }}>🔍</span>
-        <input 
-          type="text" 
+        <input
+          type="text"
           placeholder={isKo ? "기사 검색..." : "Pesquisar posts..."}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          style={{ 
-            width: "100%", 
-            padding: "1rem 1rem 1rem 3rem", 
-            borderRadius: "12px", 
-            border: "1px solid #eee", 
+          style={{
+            width: "100%",
+            padding: "1rem 1rem 1rem 3rem",
+            borderRadius: "12px",
+            border: "1px solid #eee",
             backgroundColor: "#f9f9f9",
             fontSize: "1rem",
             outline: "none"
@@ -78,10 +78,10 @@ export default function MainPage() {
       </div>
 
       {/* Grid Layout */}
-      <div style={{ 
-        display: "grid", 
-        gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", 
-        gap: "2rem" 
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+        gap: "2rem"
       }}>
         {filtered.length === 0 && (
           <p style={{ color: "#999", gridColumn: "1 / -1", textAlign: "center", padding: "5rem 0" }}>
@@ -94,7 +94,7 @@ export default function MainPage() {
             href={`/content/${content.id}`}
             style={{ textDecoration: "none", color: "inherit" }}
           >
-            <div style={{ 
+            <div style={{
               borderRadius: "16px",
               border: "1px solid #eee",
               overflow: "hidden",
@@ -116,18 +116,18 @@ export default function MainPage() {
             >
               {/* Card Image */}
               <div style={{ position: "relative", height: "200px", width: "100%" }}>
-                <img 
-                  src={`https://picsum.photos/seed/${content.id}/600/400`} 
-                  alt={content.title} 
+                <img
+                  src={`https://picsum.photos/seed/${content.id}/600/400`}
+                  alt={content.title}
                   style={{ width: "100%", height: "100%", objectFit: "cover" }}
                 />
-                <div style={{ 
-                  position: "absolute", 
-                  top: "1rem", 
-                  left: "1rem", 
-                  backgroundColor: "#000", 
-                  color: "#fff", 
-                  padding: "0.25rem 0.6rem", 
+                <div style={{
+                  position: "absolute",
+                  top: "1rem",
+                  left: "1rem",
+                  backgroundColor: "#000",
+                  color: "#fff",
+                  padding: "0.25rem 0.6rem",
                   borderRadius: "6px",
                   fontSize: "0.75rem",
                   fontWeight: "700"
@@ -137,8 +137,8 @@ export default function MainPage() {
               </div>
 
               {/* Card Content */}
-              <div style={{ 
-                padding: "1.5rem", 
+              <div style={{
+                padding: "1.5rem",
                 backgroundColor: "#fff",
                 flex: 1,
                 display: "flex",

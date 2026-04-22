@@ -38,11 +38,126 @@ export default function AdminPage() {
     es: "스페인어 (ES)"
   };
 
+  const ADMIN_UI = {
+    ko: {
+      title: "관리자 콘솔",
+      subtitle: "컨텐츠 생성 파이프라인",
+      tabs: {
+        create: "파이프라인 실행",
+        list: "게시 목록",
+      },
+      steps: {
+        select: "1. 기사 선택",
+        "review-ko": "2. 컨텐츠 검수",
+        "review-es": "3. 번역 검수",
+        preview: "4. 미리보기",
+      },
+      actions: {
+        save: "임시 저장",
+        saving: "저장 중...",
+        saved: "저장됨",
+        reset: "초기화",
+        publish: "게시하기",
+        backToEdit: "← 편집으로 돌아가기",
+        cancel: "취소하기",
+      },
+      select: {
+        placeholder: "기사 URL을 입력하세요",
+        add: "추가",
+      },
+      review: {
+        koTitle: "2. 컨텐츠 검수",
+        esTitle: "3. 번역 검수",
+        koPlaceholder: "AI 생성을 시작하거나 직접 입력하세요.",
+        esPlaceholder: "번역을 진행하거나 직접 입력하세요.",
+      },
+      preview: {
+        emptyKo: "한국어 컨텐츠가 아직 생성되지 않았습니다.",
+        emptyEs: "스페인어 번역이 아직 진행되지 않았습니다.",
+      },
+      sidebar: {
+        title: "워크플로우 제어",
+        runTranslation: "번역 실행 (ES)",
+        translating: "⌛ 번역 중...",
+        translateBtn: "🌎 스페인어로 번역하기",
+        checkPreview: "👁 미리보기 확인",
+        generating: "⌛ 컨텐츠 생성 중...",
+        generateBtn: "🤖 AI 컨텐츠 생성",
+        regenerateBtn: "🔄 컨텐츠 재생성하기",
+        retranslateBtn: "🔄 재번역하기",
+      },
+      list: {
+        loading: "게시된 컨텐츠 목록을 불러오고 있습니다...",
+      },
+      messages: {
+        confirmDraft: "이전에 작업하던 임시 저장된 데이터가 있습니다. 이어서 작업하시겠습니까?",
+        published: "컨텐츠가 성공적으로 등록되었습니다.",
+      }
+    },
+    es: {
+      title: "Consola de Administración",
+      subtitle: "Pipeline de Creación de Contenido",
+      tabs: {
+        create: "Ejecutar Pipeline",
+        list: "Lista de Publicaciones",
+      },
+      steps: {
+        select: "1. Seleccionar Artículos",
+        "review-ko": "2. Revisar Contenido",
+        "review-es": "3. Revisar Traducción",
+        preview: "4. Vista Previa",
+      },
+      actions: {
+        save: "Guardar Borrador",
+        saving: "Guardando...",
+        saved: "Guardado",
+        reset: "Restablecer",
+        publish: "Publicar",
+        backToEdit: "← Volver a edición",
+        cancel: "Cancelar",
+      },
+      select: {
+        placeholder: "Ingrese la URL del artículo",
+        add: "Agregar",
+      },
+      review: {
+        koTitle: "2. Revisar Contenido",
+        esTitle: "3. Revisar Traducción",
+        koPlaceholder: "Inicie la generación de IA o ingrese directamente.",
+        esPlaceholder: "Proceda con la traducción o ingrese directamente.",
+      },
+      preview: {
+        emptyKo: "El contenido en coreano aún no se ha generado.",
+        emptyEs: "La traducción al español aún no se ha realizado.",
+      },
+      sidebar: {
+        title: "Control de Workflow",
+        runTranslation: "Ejecutar Traducción (ES)",
+        translating: "⌛ Traduciendo...",
+        translateBtn: "🌎 Traducir al Español",
+        checkPreview: "👁 Verificar Vista Previa",
+        generating: "⌛ Generando Contenido...",
+        generateBtn: "🤖 Generación de Contenido AI",
+        regenerateBtn: "🔄 Regenerar Contenido",
+        retranslateBtn: "🔄 Retraducir",
+      },
+      list: {
+        loading: "Cargando la lista de contenido publicado...",
+      },
+      messages: {
+        confirmDraft: "Hay datos guardados temporalmente del trabajo anterior. ¿Desea continuar?",
+        published: "El contenido se ha registrado correctamente.",
+      }
+    }
+  };
+
+  const UI = ADMIN_UI[language];
+
   // 초기 진입 시 임시 저장 데이터 확인
   useEffect(() => {
     const saved = localStorage.getItem("coreahoy_draft");
     if (saved && pathname === "/admin" && activeTab === "create") {
-      const confirmed = window.confirm("이전에 작업하던 임시 저장된 데이터가 있습니다. 이어서 작업하시겠습니까?");
+      const confirmed = window.confirm(UI.messages.confirmDraft);
       if (confirmed) {
         const data = JSON.parse(saved);
         setSelected(data.selected || []);
@@ -54,7 +169,7 @@ export default function AdminPage() {
         resetAll();
       }
     }
-  }, []);
+  }, [UI.messages.confirmDraft, pathname, activeTab]);
 
   // 번역 검수 단계 진입 시 미리보기 언어 자동 설정
   useEffect(() => {
@@ -90,7 +205,7 @@ export default function AdminPage() {
   }
 
   function handlePublish() {
-    alert("컨텐츠가 성공적으로 등록되었습니다.");
+    alert(UI.messages.published);
     resetAll();
   }
 
@@ -122,7 +237,9 @@ export default function AdminPage() {
         .map(c => c.title)
         .join(", ");
 
-      const result = `[AI 컨텐츠]\n\n'${selectedTitles}' 관련 기사를 요약한 결과입니다. 현재 한국 사회에서는 새로운 기술적 변화가 문화 전반에 큰 영향을 미치고 있습니다.\n\n특히 이러한 변화는 젊은 세대의 라이프스타일을 재정의하고 있으며, 사회적 상호작용의 방식을 혁신적으로 바꾸고 있습니다. 이는 한국만의 독특한 현상을 넘어 글로벌 트렌드와도 궤를 같이하고 있습니다.`;
+      const result = isKo 
+        ? `[AI 컨텐츠]\n\n'${selectedTitles}' 관련 기사를 요약한 결과입니다. 현재 한국 사회에서는 새로운 기술적 변화가 문화 전반에 큰 영향을 미치고 있습니다.\n\n특히 이러한 변화는 젊은 세대의 라이프스타일을 재정의하고 있으며, 사회적 상호작용의 방식을 혁신적으로 바꾸고 있습니다. 이는 한국만의 독특한 현상을 넘어 글로벌 트렌드와도 궤를 같이하고 있습니다.`
+        : `[Contenido IA]\n\nEste es el resultado del resumen de artículos relacionados con '${selectedTitles}'. Actualmente, los nuevos cambios tecnológicos en la sociedad coreana están teniendo un gran impacto en la cultura en general.\n\nEspecíficamente, estos cambios están redefiniendo el estilo de vida de las generaciones jóvenes e innovando la forma en que interactuamos socialmente. Esto va más allá de un fenómeno exclusivo de Corea y está en sintonía con las tendencias globales.`;
       
       setContentKo(result);
       setIsGenerating(false);
@@ -142,13 +259,6 @@ export default function AdminPage() {
     }, 1000);
   }
 
-  const STEP_LABELS: Record<Step, string> = {
-    select: "1. 기사 선택",
-    "review-ko": "2. 컨텐츠 검수",
-    "review-es": "3. 번역 검수",
-    preview: "4. 미리보기"
-  };
-
   const TopActions = () => (
     <div style={{ display: "flex", gap: "0.5rem" }}>
       <button 
@@ -165,7 +275,7 @@ export default function AdminPage() {
           transition: "all 0.2s"
         }}
       >
-        {saveStatus === "saving" ? "저장 중..." : saveStatus === "saved" ? "저장됨" : "임시 저장"}
+        {saveStatus === "saving" ? UI.actions.saving : saveStatus === "saved" ? UI.actions.saved : UI.actions.save}
       </button>
       <button 
         onClick={() => {
@@ -174,7 +284,7 @@ export default function AdminPage() {
         }}
         style={{ background: "#fff", border: "1px solid #eee", padding: "0.5rem 1rem", borderRadius: "8px", cursor: "pointer", fontWeight: "700", fontSize: "0.85rem", color: "#666" }}
       >
-        초기화
+        {UI.actions.reset}
       </button>
     </div>
   );
@@ -182,14 +292,14 @@ export default function AdminPage() {
   return (
     <div style={{ maxWidth: 1200, margin: "0 auto", paddingBottom: "4rem" }}>
       <header style={{ marginBottom: "2.5rem" }}>
-        <h1 style={{ fontSize: "2.5rem", fontWeight: "900", marginBottom: "0.5rem" }}>관리자 콘솔</h1>
-        <p style={{ color: "#666" }}>컨텐츠 생성 파이프라인</p>
+        <h1 style={{ fontSize: "2.5rem", fontWeight: "900", marginBottom: "0.5rem" }}>{UI.title}</h1>
+        <p style={{ color: "#666" }}>{UI.subtitle}</p>
       </header>
 
       <div style={{ display: "flex", gap: "2.5rem", marginBottom: "2.5rem", borderBottom: "1px solid #eee" }}>
         {([
-          { id: "create", label: "파이프라인 실행" },
-          { id: "list", label: "게시 목록" }
+          { id: "create", label: UI.tabs.create },
+          { id: "list", label: UI.tabs.list }
         ] as const).map((tab) => (
           <button
             key={tab.id}
@@ -215,7 +325,7 @@ export default function AdminPage() {
           
           <div style={{ width: "100%" }}>
             <div style={{ display: "flex", gap: "0.5rem", marginBottom: "2.5rem", overflowX: "auto", paddingBottom: "0.5rem" }}>
-              {(Object.keys(STEP_LABELS) as Step[]).map((s) => (
+              {(Object.keys(UI.steps) as Step[]).map((s) => (
                 <button
                   key={s}
                   onClick={() => setStep(s)}
@@ -231,7 +341,7 @@ export default function AdminPage() {
                     cursor: "pointer"
                   }}
                 >
-                  {STEP_LABELS[s]}
+                  {UI.steps[s]}
                 </button>
               ))}
             </div>
@@ -239,8 +349,8 @@ export default function AdminPage() {
             {step === "select" && (
               <div style={{ animation: "fadeIn 0.3s" }}>
                 <div style={{ marginBottom: "2rem", display: "flex", gap: "0.75rem" }}>
-                  <input value={urlInput} onChange={(e) => setUrlInput(e.target.value)} placeholder="기사 URL을 입력하세요" style={{ flex: 1, border: "2px solid #eee", padding: "1rem", borderRadius: "16px", outline: "none" }} />
-                  <button onClick={addUrl} style={{ backgroundColor: "#000", color: "#fff", padding: "0 2rem", borderRadius: "16px", border: "none", cursor: "pointer", fontWeight: "700" }}>추가</button>
+                  <input value={urlInput} onChange={(e) => setUrlInput(e.target.value)} placeholder={UI.select.placeholder} style={{ flex: 1, border: "2px solid #eee", padding: "1rem", borderRadius: "16px", outline: "none" }} />
+                  <button onClick={addUrl} style={{ backgroundColor: "#000", color: "#fff", padding: "0 2rem", borderRadius: "16px", border: "none", cursor: "pointer", fontWeight: "700" }}>{UI.select.add}</button>
                 </div>
                 <div style={{ display: "grid", gap: "1rem" }}>
                   {candidates.map((article) => (
@@ -260,10 +370,10 @@ export default function AdminPage() {
               <div style={{ animation: "fadeIn 0.3s" }}>
                 <div style={{ backgroundColor: "#fff", border: "2px solid #000", borderRadius: "24px", padding: "2rem" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-                    <h3 style={{ margin: 0, fontSize: "1.5rem", fontWeight: "900" }}>2. 컨텐츠 검수</h3>
+                    <h3 style={{ margin: 0, fontSize: "1.5rem", fontWeight: "900" }}>{UI.review.koTitle}</h3>
                     <TopActions />
                   </div>
-                  <textarea value={contentKo} onChange={(e) => setContentKo(e.target.value)} placeholder="AI 생성을 시작하거나 직접 입력하세요." style={{ width: "100%", minHeight: "450px", border: "1px solid #eee", borderRadius: "12px", padding: "1.5rem", fontSize: "1.1rem", lineHeight: 1.7, outline: "none", fontFamily: "inherit" }} />
+                  <textarea value={contentKo} onChange={(e) => setContentKo(e.target.value)} placeholder={UI.review.koPlaceholder} style={{ width: "100%", minHeight: "450px", border: "1px solid #eee", borderRadius: "12px", padding: "1.5rem", fontSize: "1.1rem", lineHeight: 1.7, outline: "none", fontFamily: "inherit" }} />
                 </div>
               </div>
             )}
@@ -272,10 +382,10 @@ export default function AdminPage() {
               <div style={{ animation: "fadeIn 0.3s" }}>
                 <div style={{ backgroundColor: "#fff", border: "2px solid #000", borderRadius: "24px", padding: "2rem" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-                    <h3 style={{ margin: 0, fontSize: "1.5rem", fontWeight: "900" }}>3. 번역 검수</h3>
+                    <h3 style={{ margin: 0, fontSize: "1.5rem", fontWeight: "900" }}>{UI.review.esTitle}</h3>
                     <TopActions />
                   </div>
-                  <textarea value={translatedContent} onChange={(e) => setTranslatedContent(e.target.value)} placeholder="번역을 진행하거나 직접 입력하세요." style={{ width: "100%", minHeight: "450px", border: "1px solid #eee", borderRadius: "12px", padding: "1.5rem", fontSize: "1.1rem", lineHeight: 1.7, outline: "none", fontFamily: "inherit" }} />
+                  <textarea value={translatedContent} onChange={(e) => setTranslatedContent(e.target.value)} placeholder={UI.review.esPlaceholder} style={{ width: "100%", minHeight: "450px", border: "1px solid #eee", borderRadius: "12px", padding: "1.5rem", fontSize: "1.1rem", lineHeight: 1.7, outline: "none", fontFamily: "inherit" }} />
                 </div>
               </div>
             )}
@@ -294,7 +404,7 @@ export default function AdminPage() {
                           </button>
                         </div>
                       </div>
-                      <button onClick={() => setStep(translatedContent ? "review-es" : "review-ko")} style={{ background: "none", border: "1px solid #eee", padding: "0.6rem 1.2rem", borderRadius: "12px", cursor: "pointer", fontWeight: "600" }}>← 편집으로 돌아가기</button>
+                      <button onClick={() => setStep(translatedContent ? "review-es" : "review-ko")} style={{ background: "none", border: "1px solid #eee", padding: "0.6rem 1.2rem", borderRadius: "12px", cursor: "pointer", fontWeight: "600" }}>{UI.actions.backToEdit}</button>
                     </div>
                     
                     <div style={{ borderRadius: "24px", overflow: "hidden", border: "1px solid #f0f0f0", minHeight: "600px", backgroundColor: "#fafafa" }}>
@@ -313,7 +423,7 @@ export default function AdminPage() {
                         </>
                       ) : (
                         <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "600px", color: "#ccc", fontWeight: "700", fontSize: "1.2rem" }}>
-                          {previewLang === "ko" ? "한국어 컨텐츠가 아직 생성되지 않았습니다." : "스페인어 번역이 아직 진행되지 않았습니다."}
+                          {previewLang === "ko" ? UI.preview.emptyKo : UI.preview.emptyEs}
                         </div>
                       )}
                     </div>
@@ -324,7 +434,7 @@ export default function AdminPage() {
                         onClick={handlePublish} 
                         style={{ backgroundColor: "#22c55e", color: "#fff", padding: "1.5rem 4rem", borderRadius: "20px", border: "none", fontWeight: "900", fontSize: "1.2rem", cursor: "pointer", boxShadow: "0 10px 25px rgba(34, 197, 94, 0.3)", opacity: !(previewLang === "ko" ? contentKo : translatedContent) ? 0.3 : 1 }}
                       >
-                        게시하기
+                        {UI.actions.publish}
                       </button>
                     </div>
                   </div>
@@ -337,43 +447,43 @@ export default function AdminPage() {
           {step !== "preview" && (
             <aside>
               <div style={{ position: "sticky", top: "100px", background: "#fff", border: "1px solid #eee", padding: "2rem", borderRadius: "24px", boxShadow: "0 10px 30px rgba(0,0,0,0.05)" }}>
-                <h4 style={{ margin: "0 0 1.5rem 0", fontSize: "1.1rem", fontWeight: "900" }}>워크플로우 제어</h4>
+                <h4 style={{ margin: "0 0 1.5rem 0", fontSize: "1.1rem", fontWeight: "900" }}>{UI.sidebar.title}</h4>
                 
                 <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
                   {step === "review-ko" && (
                     <div style={{ borderBottom: "1px solid #eee", paddingBottom: "1rem" }}>
-                      <label style={{ display: "block", fontSize: "0.85rem", color: "#666", fontWeight: "700", marginBottom: "0.5rem" }}>번역 실행 (ES)</label>
+                      <label style={{ display: "block", fontSize: "0.85rem", color: "#666", fontWeight: "700", marginBottom: "0.5rem" }}>{UI.sidebar.runTranslation}</label>
                       <button 
                         onClick={runTranslation} 
                         disabled={!contentKo || isTranslating}
                         style={{ width: "100%", backgroundColor: "#000", color: "#fff", border: "none", padding: "1.25rem", borderRadius: "16px", fontWeight: "800", cursor: "pointer", opacity: (!contentKo || isTranslating) ? 0.3 : 1 }}
                       >
-                        {isTranslating ? "⌛ 번역 중..." : "🌎 스페인어로 번역하기"}
+                        {isTranslating ? UI.sidebar.translating : UI.sidebar.translateBtn}
                       </button>
                     </div>
                   )}
 
                   {step === "review-es" && (
-                    <button onClick={() => setStep("preview")} disabled={!translatedContent} style={{ backgroundColor: "#000", color: "#fff", border: "none", padding: "1.25rem", borderRadius: "16px", fontWeight: "800", cursor: "pointer", opacity: !translatedContent ? 0.3 : 1 }}>👁 미리보기 확인</button>
+                    <button onClick={() => setStep("preview")} disabled={!translatedContent} style={{ backgroundColor: "#000", color: "#fff", border: "none", padding: "1.25rem", borderRadius: "16px", fontWeight: "800", cursor: "pointer", opacity: !translatedContent ? 0.3 : 1 }}>{UI.sidebar.checkPreview}</button>
                   )}
 
                   {step === "select" && (
                     <button disabled={isGenerating} onClick={runAiGeneration} style={{ backgroundColor: "#000", color: "#fff", padding: "1.25rem", borderRadius: "16px", border: "none", fontWeight: "800", cursor: "pointer", opacity: isGenerating ? 0.3 : 1 }}>
-                      {isGenerating ? "⌛ 컨텐츠 생성 중..." : "🤖 AI 컨텐츠 생성"}
+                      {isGenerating ? UI.sidebar.generating : UI.sidebar.generateBtn}
                     </button>
                   )}
 
                   {step === "review-ko" && (
-                    <button disabled={isGenerating} onClick={runAiGeneration} style={{ backgroundColor: "#fff", color: "#000", border: "2px solid #000", padding: "1.25rem", borderRadius: "16px", fontWeight: "800", cursor: "pointer" }}>🔄 컨텐츠 재생성하기</button>
+                    <button disabled={isGenerating} onClick={runAiGeneration} style={{ backgroundColor: "#fff", color: "#000", border: "2px solid #000", padding: "1.25rem", borderRadius: "16px", fontWeight: "800", cursor: "pointer" }}>{UI.sidebar.regenerateBtn}</button>
                   )}
 
                   {step === "review-es" && (
-                    <button disabled={isTranslating} onClick={runTranslation} style={{ backgroundColor: "#fff", color: "#000", border: "2px solid #000", padding: "1.25rem", borderRadius: "16px", fontWeight: "800", cursor: "pointer" }}>🔄 재번역하기</button>
+                    <button disabled={isTranslating} onClick={runTranslation} style={{ backgroundColor: "#fff", color: "#000", border: "2px solid #000", padding: "1.25rem", borderRadius: "16px", fontWeight: "800", cursor: "pointer" }}>{UI.sidebar.retranslateBtn}</button>
                   )}
 
                   <div style={{ marginTop: "1rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
                     {step !== "select" && (
-                      <button onClick={() => { setStep("select"); resetAll(); }} style={{ background: "none", border: "1px solid #eee", color: "#999", padding: "1rem", borderRadius: "12px", fontWeight: "700", cursor: "pointer" }}>취소하기</button>
+                      <button onClick={() => { setStep("select"); resetAll(); }} style={{ background: "none", border: "1px solid #eee", color: "#999", padding: "1rem", borderRadius: "12px", fontWeight: "700", cursor: "pointer" }}>{UI.actions.cancel}</button>
                     )}
                   </div>
                 </div>
@@ -385,7 +495,7 @@ export default function AdminPage() {
 
       {activeTab === "list" && (
         <div style={{ padding: "3rem", textAlign: "center", backgroundColor: "#fff", border: "1px solid #eee", borderRadius: "32px" }}>
-          <p style={{ color: "#999", fontSize: "1.1rem" }}>게시된 컨텐츠 목록을 불러오고 있습니다...</p>
+          <p style={{ color: "#999", fontSize: "1.1rem" }}>{UI.list.loading}</p>
         </div>
       )}
     </div>
