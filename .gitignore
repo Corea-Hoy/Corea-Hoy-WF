@@ -28,6 +28,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# 내부 문서
+기획서.md
+
 # AI assistant settings (IMPORTANT)
 .claude/
 .gemini/
