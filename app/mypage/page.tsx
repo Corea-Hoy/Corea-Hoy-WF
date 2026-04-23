@@ -26,6 +26,7 @@ export default function MyPage() {
   const { user, isLoggedIn, updateProfile, logout, deleteAccount } = useUserStore();
   const isKo = language === "ko";
 
+  const [mounted, setMounted] = useState(false);
   const [editing, setEditing] = useState(false);
   const [tempNickname, setTempNickname] = useState("");
   const [tempAvatar, setTempAvatar] = useState(AVATAR_PRESETS[0]);
@@ -33,10 +34,14 @@ export default function MyPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   useEffect(() => {
-    if (!isLoggedIn) router.replace("/login");
-  }, [isLoggedIn, router]);
+    setMounted(true);
+  }, []);
 
-  if (!user) return null;
+  useEffect(() => {
+    if (mounted && !isLoggedIn) router.replace("/login");
+  }, [mounted, isLoggedIn, router]);
+
+  if (!mounted || !user) return null;
 
   const likedContents = MOCK_CONTENTS.filter((c) => user.likedContentIds.includes(c.id));
   const myComments = MOCK_CONTENTS.flatMap((c) =>

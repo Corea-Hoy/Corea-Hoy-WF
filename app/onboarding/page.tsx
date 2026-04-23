@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useUserStore, AVATAR_PRESETS } from "@/lib/stores/userStore";
+import { useLanguageStore } from "@/lib/stores/languageStore";
 
 export default function OnboardingPage() {
   const router = useRouter();
   const t = useTranslations("onboarding");
   const { isLoggedIn, completeOnboarding } = useUserStore();
+  const { language } = useLanguageStore();
 
   const [selectedAvatar, setSelectedAvatar] = useState(AVATAR_PRESETS[0]);
   const [nickname, setNickname] = useState("");
@@ -19,18 +21,42 @@ export default function OnboardingPage() {
     if (!isLoggedIn) router.replace("/login");
   }, [isLoggedIn, router]);
 
+  const ADJECTIVES = {
+    ko: ["달콤한", "열정적인", "트렌디한", "매운맛", "행복한", "힙한", "친절한"],
+    es: ["Dulce", "Apasianado", "Moderno", "Picante", "Feliz", "Genial", "Amable"],
+    en: ["Sweet", "Passionate", "Trendy", "Spicy", "Happy", "Cool", "Kind"]
+  };
+
+  const NOUNS = {
+    ko: ["서울러", "케이팝팬", "달고나", "여행자", "덕후", "친구", "에디터"],
+    es: ["Seulense", "KpopFan", "Dalgona", "Viajero", "Fanatico", "Amigo", "Editor"],
+    en: ["Seoulite", "KpopFan", "Dalgona", "Traveler", "Geek", "Friend", "Editor"]
+  };
+
+  function generateUniqueNickname(lang: string): string {
+    const safeLang = ADJECTIVES[lang as keyof typeof ADJECTIVES] ? lang : "en";
+    const adjs = ADJECTIVES[safeLang as keyof typeof ADJECTIVES];
+    const nouns = NOUNS[safeLang as keyof typeof NOUNS];
+    const randomAdj = adjs[Math.floor(Math.random() * adjs.length)];
+    const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
+    const randomNum = Math.floor(1000 + Math.random() * 9000);
+    return `${randomAdj}_${randomNoun}_${randomNum}`;
+  }
+
   function handleConfirm() {
-    const trimmed = nickname.trim();
-    if (trimmed.length < 2 || trimmed.length > 20) {
+    let finalNickname = nickname.trim();
+    if (finalNickname.length === 0) {
+      finalNickname = generateUniqueNickname(language);
+    } else if (finalNickname.length < 2 || finalNickname.length > 20) {
       setError(t("nicknameError"));
       return;
     }
-    completeOnboarding(trimmed, selectedAvatar.emoji, selectedAvatar.color);
+    completeOnboarding(finalNickname, selectedAvatar.emoji, selectedAvatar.color);
     router.push("/");
   }
 
   function handleSkip() {
-    completeOnboarding("Anonymous", "🐨", AVATAR_PRESETS[0].color);
+    completeOnboarding(generateUniqueNickname(language), selectedAvatar.emoji, selectedAvatar.color);
     router.push("/");
   }
 

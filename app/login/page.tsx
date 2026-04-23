@@ -1,15 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useUserStore } from "@/lib/stores/userStore";
+import { useLanguageStore } from "@/lib/stores/languageStore";
 
 export default function LoginPage() {
   const router = useRouter();
   const t = useTranslations("login");
   const { login } = useUserStore();
+  const { language } = useLanguageStore();
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const isKo = mounted ? language === "ko" : true;
   const [loading, setLoading] = useState(false);
 
   function handleGoogleLogin() {
@@ -44,6 +53,14 @@ export default function LoginPage() {
           )}
           {loading ? t("connecting") : t("google")}
         </button>
+
+        <p className="mt-5 text-[11px] leading-relaxed text-gray-400 text-center px-2">
+          {isKo ? (
+            <>계속 진행하면 코레아 호이의 <a href="/privacy" className="underline hover:text-gray-600">이용약관 및 개인정보 처리방침</a>에 동의하는 것으로 간주됩니다.</>
+          ) : (
+            <>Al continuar, aceptas nuestros <a href="/privacy" className="underline hover:text-gray-600">Términos de servicio y Política de privacidad</a>.</>
+          )}
+        </p>
 
         <div className="mt-6 pt-5 border-t border-gray-100 text-center">
           <button

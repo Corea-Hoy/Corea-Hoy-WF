@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 export interface UserProfile {
   name: string;
@@ -20,41 +21,46 @@ interface UserState {
   deleteAccount: () => void;
 }
 
-export const useUserStore = create<UserState>((set) => ({
-  user: null,
-  isLoggedIn: false,
-  isOnboarded: false,
+export const useUserStore = create<UserState>()(
+  persist(
+    (set) => ({
+      user: null,
+      isLoggedIn: false,
+      isOnboarded: false,
 
-  login: () => set({ isLoggedIn: true }),
+      login: () => set({ isLoggedIn: true }),
 
-  completeOnboarding: (name, avatarEmoji, avatarColor) =>
-    set({
-      user: { name, email: "user@gmail.com", avatarEmoji, avatarColor, likedContentIds: ["c1", "c3"] },
-      isOnboarded: true,
+      completeOnboarding: (name, avatarEmoji, avatarColor) =>
+        set({
+          user: { name, email: "user@gmail.com", avatarEmoji, avatarColor, likedContentIds: ["c1", "c3"] },
+          isOnboarded: true,
+        }),
+
+      updateProfile: (name, avatarEmoji, avatarColor) =>
+        set((state) => ({
+          user: state.user ? { ...state.user, name, avatarEmoji, avatarColor } : null,
+        })),
+
+      toggleLike: (contentId) =>
+        set((state) => {
+          if (!state.user) return state;
+          const isLiked = state.user.likedContentIds.includes(contentId);
+          return {
+            user: {
+              ...state.user,
+              likedContentIds: isLiked
+                ? state.user.likedContentIds.filter((id) => id !== contentId)
+                : [...state.user.likedContentIds, contentId],
+            },
+          };
+        }),
+
+      logout: () => set({ user: null, isLoggedIn: false, isOnboarded: false }),
+      deleteAccount: () => set({ user: null, isLoggedIn: false, isOnboarded: false }),
     }),
-
-  updateProfile: (name, avatarEmoji, avatarColor) =>
-    set((state) => ({
-      user: state.user ? { ...state.user, name, avatarEmoji, avatarColor } : null,
-    })),
-
-  toggleLike: (contentId) =>
-    set((state) => {
-      if (!state.user) return state;
-      const isLiked = state.user.likedContentIds.includes(contentId);
-      return {
-        user: {
-          ...state.user,
-          likedContentIds: isLiked
-            ? state.user.likedContentIds.filter((id) => id !== contentId)
-            : [...state.user.likedContentIds, contentId],
-        },
-      };
-    }),
-
-  logout: () => set({ user: null, isLoggedIn: false, isOnboarded: false }),
-  deleteAccount: () => set({ user: null, isLoggedIn: false, isOnboarded: false }),
-}));
+    { name: "coreahoy-user" }
+  )
+);
 
 export const AVATAR_PRESETS = [
   { emoji: "🐨", color: "#e5d5b0" },

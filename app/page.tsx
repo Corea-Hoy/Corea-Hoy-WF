@@ -1,14 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useLanguageStore } from "@/lib/stores/languageStore";
 import { MOCK_CONTENTS, type Category } from "@/lib/mock-data";
+import ContentCard from "@/components/ContentCard";
 
 const CATEGORIES: (Category | "전체")[] = ["전체", "K-POP", "드라마", "뉴스", "문화", "스포츠", "음식"];
 const CATEGORIES_ES: string[] = ["Todos", "K-POP", "Drama", "Noticias", "Cultura", "Deportes", "Comida"];
+
+const PAGE_SIZE = 10;
 
 export default function MainPage() {
   const t = useTranslations("home");
@@ -17,6 +19,8 @@ export default function MainPage() {
 
   const [activeCategory, setActiveCategory] = useState<Category | "전체">("전체");
   const [searchQuery, setSearchQuery] = useState("");
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const observerTarget = useRef<HTMLDivElement>(null);
 
   const filtered = MOCK_CONTENTS.filter((c) => {
     const matchesCategory = activeCategory === "전체" || c.category === activeCategory;
@@ -25,6 +29,27 @@ export default function MainPage() {
       (isKo ? c.summary : c.summaryEs).toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
+
+  const visible = filtered.slice(0, visibleCount);
+  const hasMore = visibleCount < filtered.length;
+
+  // Reset visible count when filter/search changes
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [activeCategory, searchQuery]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore) {
+          setVisibleCount((prev) => prev + PAGE_SIZE);
+        }
+      },
+      { threshold: 0.1 }
+    );
+    if (observerTarget.current) observer.observe(observerTarget.current);
+    return () => observer.disconnect();
+  }, [hasMore]);
 
   const trending = [...MOCK_CONTENTS].sort((a, b) => b.likes - a.likes).slice(0, 3);
 
@@ -68,48 +93,18 @@ export default function MainPage() {
 
           {/* Article grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            {filtered.length === 0 && (
+            {visible.length === 0 && (
               <p className="col-span-full text-center text-gray-400 py-20 text-sm">
                 {t("noResults")}
               </p>
             )}
-            {filtered.map((content) => (
-              <Link
-                key={content.id}
-                href={`/content/${content.id}`}
-                className="group block rounded-2xl border border-gray-100 overflow-hidden bg-white hover:-translate-y-1 hover:shadow-lg transition-all duration-200"
-              >
-                {/* Card image */}
-                <div className="relative h-48 w-full">
-                  <Image
-                    src={`https://picsum.photos/seed/${content.id}/600/400`}
-                    alt={content.title}
-                    fill
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 40vw"
-                    className="object-cover"
-                  />
-                  <div className="absolute top-3 left-3 bg-black text-white text-xs font-bold px-2 py-1 rounded">
-                    {content.category}
-                  </div>
-                </div>
-
-                {/* Card body */}
-                <div className="p-5 flex flex-col gap-2">
-                  <div className="text-xs text-gray-400 font-semibold">{content.publishedAt}</div>
-                  <h2 className="text-base font-bold leading-snug text-black line-clamp-2">
-                    {isKo ? content.title : content.titleEs}
-                  </h2>
-                  <p className="text-sm text-gray-400 italic line-clamp-2">
-                    {isKo ? content.summary : content.summaryEs}
-                  </p>
-                  <div className="flex items-center gap-1 mt-1 text-xs text-gray-400">
-                    <span>♥</span>
-                    <span>{content.likes}</span>
-                  </div>
-                </div>
-              </Link>
+            {visible.map((content) => (
+              <ContentCard key={content.id} content={content} isKo={isKo} />
             ))}
           </div>
+
+          {/* Infinite scroll sentinel */}
+          {hasMore && <div ref={observerTarget} className="h-10 w-full" />}
         </div>
 
         {/* ── Sidebar — desktop only ── */}
