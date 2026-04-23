@@ -10,7 +10,8 @@
     "newsletter": "뉴스레터",
     "mypage": "마이페이지",
     "langKo": "한국어 (KR)",
-    "langEs": "스페인어 (ES)"
+    "langEs": "스페인어 (ES)",
+    "search": "검색..."
   },
   "home": {
     "title": "뉴스레터",
@@ -22,7 +23,7 @@
     "heroSubtitle": "K-POP, 드라마, 뉴스, 음식까지 — 라틴아메리카를 위한 한국 문화 미디어",
     "heroCta": "뉴스레터 보기",
     "heroCtaSub": "더 알아보기",
-    "newsletterTitle": "최신 뉴스레터",
+    "newsletterTitle": "뉴스레터",
     "statsReaders": "독자",
     "statsEditions": "에디션",
     "statsCountries": "국가"

@@ -23,7 +23,6 @@ export default function FeedbackPage() {
     { value: "translation", label: isKo ? "오역 및 번역 제안" : "Traducción", icon: "🌐" },
     { value: "feature", label: isKo ? "새로운 기능 제안" : "Sugerencia de función", icon: "✨" },
     { value: "bug", label: isKo ? "버그 및 오류" : "Error de sistema", icon: "🐛" },
-    { value: "community", label: isKo ? "커뮤니티 관련" : "Comunidad", icon: "👥" },
     { value: "other", label: isKo ? "기타 의견" : "Otros", icon: "💡" },
   ];
 
@@ -42,6 +41,7 @@ export default function FeedbackPage() {
     
     console.log("Submitting Feedback:", feedbackPayload); // 테스트용 로그
 
+    alert("등록되었습니다.");
     setSubmitted(true);
   }
 
