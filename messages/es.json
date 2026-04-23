@@ -7,6 +7,7 @@
     "feedback": "Sugerencias",
     "selectLang": "Seleccionar idioma",
     "home": "Inicio",
+    "newsletter": "Newsletter",
     "mypage": "Mi perfil",
     "langKo": "Coreano (KR)",
     "langEs": "Español (ES)"
@@ -16,7 +17,28 @@
     "search": "Buscar artículos...",
     "noResults": "No se encontraron resultados.",
     "categories": "Categorías",
-    "trending": "Tendencias"
+    "trending": "Tendencias",
+    "heroTitle": "Cultura coreana en español",
+    "heroSubtitle": "K-POP, dramas, noticias y gastronomía — el medio de cultura coreana para Latinoamérica",
+    "heroCta": "Ver newsletter",
+    "heroCtaSub": "Saber más",
+    "newsletterTitle": "Últimas ediciones",
+    "statsReaders": "lectores",
+    "statsEditions": "ediciones",
+    "statsCountries": "países"
+  },
+  "footer": {
+    "tagline": "Llevando la cultura coreana a Latinoamérica",
+    "desc": "Corea Hoy es una plataforma de medios que entrega contenido cultural coreano en español, incluyendo K-POP, dramas, noticias y gastronomía. Acompañamos a los fans de la cultura coreana en toda América Latina.",
+    "nav": "Servicios",
+    "home": "Inicio",
+    "labs": "Laboratorios",
+    "feedback": "Sugerencias",
+    "contact": "Contacto",
+    "email": "xxx@gmail.com",
+    "rights": "Todos los derechos reservados.",
+    "privacy": "Política de privacidad",
+    "demo": "Actualmente en versión beta."
   },
   "login": {
     "subtitle": "Inicia sesión para comentar y guardar artículos",

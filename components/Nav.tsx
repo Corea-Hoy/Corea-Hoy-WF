@@ -27,13 +27,12 @@ export default function Nav() {
   ];
 
   const desktopLinks = [
-    { href: "/admin", label: t("admin") },
+    { href: "/#newsletter", label: t("newsletter") },
     { href: "/labs", label: `✨ ${t("labs")}` },
     { href: "/feedback", label: `💬 ${t("feedback")}` },
   ];
 
   const bottomTabs = [
-    { href: "/", label: t("home"), icon: "🏠" },
     { href: "/labs", label: t("labs"), icon: "✨" },
     { href: "/feedback", label: t("feedback"), icon: "💬" },
     { href: "/admin", label: t("admin"), icon: "⚙️" },
@@ -99,7 +98,7 @@ export default function Nav() {
           <div className="flex items-center gap-5 ml-2">
             {desktopLinks.map(({ href, label }) => (
               <Link
-                key={href}
+                key={label}
                 href={href}
                 className={`text-sm font-bold transition-colors whitespace-nowrap ${
                   pathname === href ? "text-black" : "text-gray-400 hover:text-black"

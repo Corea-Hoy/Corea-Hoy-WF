@@ -7,6 +7,7 @@
     "feedback": "피드백",
     "selectLang": "언어 선택",
     "home": "홈",
+    "newsletter": "뉴스레터",
     "mypage": "마이페이지",
     "langKo": "한국어 (KR)",
     "langEs": "스페인어 (ES)"
@@ -16,7 +17,28 @@
     "search": "기사 검색...",
     "noResults": "검색 결과가 없습니다.",
     "categories": "카테고리",
-    "trending": "인기 기사"
+    "trending": "인기 기사",
+    "heroTitle": "한국 문화를 스페인어로",
+    "heroSubtitle": "K-POP, 드라마, 뉴스, 음식까지 — 라틴아메리카를 위한 한국 문화 미디어",
+    "heroCta": "뉴스레터 보기",
+    "heroCtaSub": "더 알아보기",
+    "newsletterTitle": "최신 뉴스레터",
+    "statsReaders": "독자",
+    "statsEditions": "에디션",
+    "statsCountries": "국가"
+  },
+  "footer": {
+    "tagline": "한국 문화를 라틴아메리카에 전하다",
+    "desc": "Corea Hoy는 K-POP, 드라마, 뉴스, 음식 등 한국의 다양한 문화 콘텐츠를 스페인어로 전달하는 미디어 플랫폼입니다. 라틴아메리카의 한국 문화 팬들과 함께합니다.",
+    "nav": "서비스",
+    "home": "홈",
+    "labs": "실험실",
+    "feedback": "피드백",
+    "contact": "문의",
+    "email": "xxx@gmail.com",
+    "rights": "All rights reserved.",
+    "privacy": "개인정보처리방침",
+    "demo": "현재 베타 서비스 중입니다."
   },
   "login": {
     "subtitle": "로그인하고 기사에 댓글을 남겨보세요",
