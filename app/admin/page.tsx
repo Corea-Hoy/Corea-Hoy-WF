@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
@@ -452,7 +452,7 @@ function SaveBtn({
 }
 
 // ── Main page ──
-export default function AdminPage() {
+function AdminPageContent() {
   const t = useTranslations("admin");
   const { language } = useLanguageStore();
   const pathname = usePathname();
@@ -1168,5 +1168,13 @@ export default function AdminPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function AdminPage() {
+  return (
+    <Suspense fallback={<div className="p-10 text-center text-gray-500">Loading...</div>}>
+      <AdminPageContent />
+    </Suspense>
   );
 }
