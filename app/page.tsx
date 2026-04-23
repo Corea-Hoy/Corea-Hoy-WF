@@ -1,39 +1,42 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback, Suspense } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useLanguageStore } from "@/lib/stores/languageStore";
 import { MOCK_CONTENTS, type Category } from "@/lib/mock-data";
 import ContentCard from "@/components/ContentCard";
+import KoreaCarousel from "@/components/KoreaCarousel";
+import { useState } from "react";
 
-const CATEGORIES: (Category | "전체")[] = ["전체", "K-POP", "드라마", "뉴스", "문화", "스포츠", "음식"];
-const CATEGORIES_ES: string[] = ["Todos", "K-POP", "Drama", "Noticias", "Cultura", "Deportes", "Comida"];
+const CATEGORIES_KO = ["전체", "K-POP", "드라마", "뉴스", "문화", "스포츠", "음식"] as const;
+const CATEGORIES_ES = ["Todos", "K-POP", "Drama", "Noticias", "Cultura", "Deportes", "Comida"];
 
 const PAGE_SIZE = 20;
 
-// Stats defined per language pair; we derive label lazily from the component
-const STATS_KO = [
-  { label: "독자", value: "12,000+" },
-  { label: "에디션", value: "48" },
-  { label: "국가", value: "18" },
-];
-const STATS_ES = [
-  { label: "lectores", value: "12,000+" },
-  { label: "ediciones", value: "48" },
-  { label: "países", value: "18" },
-];
+// Stats removed as requested
 
-export default function MainPage() {
+// ── Inner component that reads searchParams ─────────────────────────────────
+function MainPageInner() {
   const t = useTranslations("home");
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { language } = useLanguageStore();
   const isKo = language === "ko";
 
-  const [activeCategory, setActiveCategory] = useState<Category | "전체">("전체");
+  // URL-synced category
+  const rawCategory = searchParams.get("category") ?? "전체";
+  const activeCategory: Category | "전체" = (
+    CATEGORIES_KO.includes(rawCategory as Category | "전체") ? rawCategory : "전체"
+  ) as Category | "전체";
+
   const [searchQuery, setSearchQuery] = useState("");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const newsletterRef = useRef<HTMLDivElement>(null);
 
+  // Filter
   const filtered = MOCK_CONTENTS.filter((c) => {
     const matchesCategory = activeCategory === "전체" || c.category === activeCategory;
     const matchesSearch =
@@ -45,11 +48,15 @@ export default function MainPage() {
   const visible = filtered.slice(0, visibleCount);
   const hasMore = visibleCount < filtered.length;
 
+  // Reset visible count when filter changes
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
   }, [activeCategory, searchQuery]);
 
-  const loadMore = () => setVisibleCount((prev) => prev + PAGE_SIZE);
+  // Load more handler
+  const loadMore = useCallback(() => {
+    if (hasMore) setVisibleCount((prev) => prev + PAGE_SIZE);
+  }, [hasMore]);
 
   // Handle #newsletter hash scroll
   useEffect(() => {
@@ -66,52 +73,59 @@ export default function MainPage() {
     newsletterRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  // Category click — update URL
+  function handleCategoryClick(cat: string) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (cat === "전체" || cat === "Todos") {
+      params.delete("category");
+    } else {
+      params.set("category", cat);
+    }
+    const qs = params.toString();
+    router.push(qs ? `/?${qs}` : "/", { scroll: false });
+  }
+
   return (
     <div>
-      {/* ── Hero Section ── */}
-      <section className="py-12 md:py-16 mb-10 border-b border-gray-100">
-        <div className="max-w-2xl">
+      {/* ── Hero Section (Carousel background + text overlay) ── */}
+      <section className="relative mb-10 overflow-hidden" style={{ height: "480px" }}>
+        {/* Carousel as background */}
+        <KoreaCarousel isKo={isKo} fullHeight />
+
+        {/* Text overlay */}
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center text-center px-4"
+          style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.55) 100%)" }}>
+
+          {/* Mascot */}
+          <div className="relative w-20 h-20 mb-4">
+            <Image src="/oi_character.webp" alt="Corea Hoy Mascot" fill className="object-contain drop-shadow-lg" priority />
+          </div>
+
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full mb-4 border border-gray-200 bg-gray-50">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full mb-4 border border-white/30 bg-white/15 backdrop-blur-sm">
             <span className="text-sm">🇰🇷</span>
-            <span className="text-xs font-bold text-gray-500 tracking-wider uppercase">Corea Hoy</span>
+            <span className="text-xs font-bold text-white/90 tracking-wider uppercase">Corea Hoy</span>
           </div>
 
           {/* Headline */}
-          <h1 className="text-4xl md:text-5xl font-extrabold text-black leading-tight mb-4" style={{ letterSpacing: "-0.02em" }}>
+          <h1 className="text-4xl md:text-5xl font-extrabold text-white leading-tight mb-4 drop-shadow-lg" style={{ letterSpacing: "-0.02em" }}>
             {t("heroTitle")}
           </h1>
 
           {/* Subtitle */}
-          <p className="text-base text-gray-500 mb-8 leading-relaxed max-w-xl">
-            {t("heroSubtitle")}
+          <p className="text-sm md:text-base text-white/85 mb-8 leading-relaxed max-w-xl drop-shadow">
+            {isKo
+              ? "매주 업데이트되는 한국의 최신 트렌드를 스페인어로 만나보세요."
+              : "Descubre las últimas tendencias de Corea actualizadas cada semana en español."}
           </p>
 
-          {/* CTAs */}
-          <div className="flex flex-wrap gap-3">
-            <button
-              onClick={scrollToNewsletter}
-              className="px-5 py-2.5 rounded-xl bg-black text-white text-sm font-bold hover:bg-gray-800 transition-colors cursor-pointer"
-            >
-              {t("heroCta")} ↓
-            </button>
-            <Link
-              href="/labs"
-              className="px-5 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-bold hover:border-gray-400 hover:text-black transition-colors"
-            >
-              ✨ {t("heroCtaSub")}
-            </Link>
-          </div>
-
-          {/* Stats */}
-          <div className="flex flex-wrap gap-8 mt-10">
-            {(isKo ? STATS_KO : STATS_ES).map(({ label, value }) => (
-              <div key={label}>
-                <div className="text-2xl font-black text-black">{value}</div>
-                <div className="text-xs text-gray-400 font-semibold uppercase tracking-wider mt-0.5">{label}</div>
-              </div>
-            ))}
-          </div>
+          {/* CTA */}
+          <button
+            onClick={scrollToNewsletter}
+            className="px-8 py-3.5 rounded-full bg-white text-gray-900 text-sm font-bold hover:bg-gray-100 transition-all shadow-lg hover:-translate-y-0.5 cursor-pointer"
+          >
+            {t("heroCta")} ↓
+          </button>
         </div>
       </section>
 
@@ -125,14 +139,25 @@ export default function MainPage() {
             </p>
             <h2 className="text-2xl md:text-3xl font-extrabold text-black">
               {t("newsletterTitle")}
+              {activeCategory !== "전체" && (
+                <span className="ml-3 text-lg font-bold text-gray-400">— {activeCategory}</span>
+              )}
             </h2>
           </div>
+          {/* Active category badge (desktop sidebar complements this) */}
+          {activeCategory !== "전체" && (
+            <button
+              onClick={() => handleCategoryClick("전체")}
+              className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black text-white text-xs font-bold hover:bg-gray-700 transition-colors cursor-pointer"
+            >
+              {activeCategory} ✕
+            </button>
+          )}
         </div>
 
-        {/* Desktop: two-column layout */}
-        <div className="lg:grid lg:grid-cols-[1fr_280px] lg:gap-10">
-
-          {/* Main column */}
+        {/* Main layout (Single column for simplicity) */}
+        <div className="max-w-screen-xl mx-auto">
+          {/* Main content */}
           <div>
             {/* Search */}
             <div className="relative mb-5">
@@ -148,12 +173,12 @@ export default function MainPage() {
               />
             </div>
 
-            {/* Category chips — mobile only */}
+            {/* Mobile category chips (fallback if header chips aren't visible) */}
             <div className="flex gap-2 flex-wrap mb-7 lg:hidden">
-              {CATEGORIES.map((cat, i) => (
+              {CATEGORIES_KO.map((cat, i) => (
                 <button
                   key={cat}
-                  onClick={() => setActiveCategory(cat)}
+                  onClick={() => handleCategoryClick(cat)}
                   className={`px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer ${
                     activeCategory === cat
                       ? "bg-black text-white border-black"
@@ -165,7 +190,7 @@ export default function MainPage() {
               ))}
             </div>
 
-            {/* Article grid — 2cols mobile / 3cols tablet / 4cols desktop */}
+            {/* Article grid */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               {visible.length === 0 && (
                 <p className="col-span-full text-center text-gray-400 py-20 text-sm">
@@ -179,91 +204,28 @@ export default function MainPage() {
 
             {/* Load More button */}
             {hasMore && (
-              <div className="flex justify-center mt-8">
+              <div className="flex justify-center mt-12 mb-20">
                 <button
                   onClick={loadMore}
-                  className="px-8 py-3 rounded-xl border-2 border-black text-sm font-bold text-black hover:bg-black hover:text-white transition-all duration-200 cursor-pointer"
+                  className="group relative px-10 py-4 rounded-full bg-white border-2 border-green-600 text-green-700 font-bold text-sm transition-all hover:bg-green-600 hover:text-white active:scale-95 shadow-md hover:shadow-lg cursor-pointer flex items-center gap-2"
                 >
-                  {isKo ? `더보기 (+${PAGE_SIZE})` : `Ver más (+${PAGE_SIZE})`}
+                  <span>{isKo ? "더보기" : "Ver más"}</span>
+                  <span className="text-xs opacity-60">(+{PAGE_SIZE})</span>
+                  <span className="transition-transform group-hover:translate-y-0.5">↓</span>
                 </button>
               </div>
             )}
           </div>
-
-          {/* Sidebar — desktop only */}
-          <aside className="hidden lg:block">
-            <div className="sticky top-24 space-y-8">
-
-              {/* Category filter */}
-              <div>
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
-                  {t("categories")}
-                </h3>
-                <div className="flex flex-col gap-1">
-                  {CATEGORIES.map((cat, i) => (
-                    <button
-                      key={cat}
-                      onClick={() => setActiveCategory(cat)}
-                      className={`text-left px-4 py-2 rounded-xl text-sm font-semibold transition-colors cursor-pointer ${
-                        activeCategory === cat
-                          ? "bg-black text-white"
-                          : "text-gray-600 hover:bg-gray-50"
-                      }`}
-                    >
-                      {isKo ? cat : CATEGORIES_ES[i]}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Trending */}
-              <div>
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
-                  {t("trending")}
-                </h3>
-                <div className="flex flex-col gap-3">
-                  {trending.map((c, idx) => (
-                    <Link
-                      key={c.id}
-                      href={`/content/${c.id}`}
-                      className="group flex gap-3 items-start p-3 rounded-xl hover:bg-gray-50 transition-colors"
-                    >
-                      <span className="text-xl font-black text-gray-200 leading-none flex-shrink-0">
-                        {idx + 1}
-                      </span>
-                      <div>
-                        <p className="text-sm font-semibold text-black leading-snug line-clamp-2 group-hover:underline">
-                          {isKo ? c.title : c.titleEs}
-                        </p>
-                        <p className="text-xs text-gray-400 mt-1">♥ {c.likes}</p>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-
-              {/* Labs promo */}
-              <div className="rounded-2xl p-5 text-white overflow-hidden relative"
-                style={{ background: "linear-gradient(135deg, #302b63, #24243e)" }}>
-                <div className="absolute -top-4 -right-4 text-6xl opacity-20 select-none">✨</div>
-                <p className="text-xs font-bold uppercase tracking-widest mb-2 text-white/60">
-                  Corea Hoy Labs
-                </p>
-                <p className="text-sm font-bold leading-snug mb-3">
-                  {isKo ? "새로운 AI 기능을 먼저 체험해보세요" : "Prueba las nuevas funciones AI primero"}
-                </p>
-                <Link
-                  href="/labs"
-                  className="inline-block text-xs font-bold px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 transition-colors"
-                >
-                  {isKo ? "실험실 보기 →" : "Ver Labs →"}
-                </Link>
-              </div>
-
-            </div>
-          </aside>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function MainPage() {
+  return (
+    <Suspense fallback={null}>
+      <MainPageInner />
+    </Suspense>
   );
 }

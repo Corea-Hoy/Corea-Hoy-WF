@@ -2,19 +2,71 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useLanguageStore } from "@/lib/stores/languageStore";
 import { useUserStore } from "@/lib/stores/userStore";
-import { useState } from "react";
+import { useState, Suspense, useEffect, useRef } from "react";
 
-export default function Nav() {
+// ── Category data (mirrored from page.tsx) ──────────────────────────────────
+const CATEGORIES_KO = ["전체", "K-POP", "드라마", "뉴스", "문화", "스포츠", "음식"] as const;
+const CATEGORIES_ES = ["Todos", "K-POP", "Drama", "Noticias", "Cultura", "Deportes", "Comida"];
+
+// ── Inner component that reads searchParams ─────────────────────────────────
+function NavInner() {
   const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const t = useTranslations("nav");
   const { language, setLanguage } = useLanguageStore();
   const { user, isLoggedIn, logout } = useUserStore();
   const [isLangOpen, setIsLangOpen] = useState(false);
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+  const desktopNavRef = useRef<HTMLElement>(null);
+  const mobileHeaderRef = useRef<HTMLElement>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleMouseEnter = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setIsCategoryOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    timeoutRef.current = setTimeout(() => {
+      setIsCategoryOpen(false);
+    }, 150);
+  };
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      const target = event.target as Node;
+      if (
+        desktopNavRef.current && !desktopNavRef.current.contains(target) &&
+        mobileHeaderRef.current && !mobileHeaderRef.current.contains(target)
+      ) {
+        setIsCategoryOpen(false);
+      }
+    }
+    if (isCategoryOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isCategoryOpen]);
+
+  const isHome = pathname === "/";
+  const isKo = language === "ko";
+
+  const activeCategory = searchParams.get("category") ?? "전체";
+
+  function handleCategoryClick(cat: string) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (cat === "전체" || cat === "Todos") {
+      params.delete("category");
+    } else {
+      params.set("category", cat);
+    }
+    router.push(`/?${params.toString()}`, { scroll: false });
+  }
 
   function handleLogout() {
     logout();
@@ -26,11 +78,6 @@ export default function Nav() {
     { code: "es" as const, label: t("langEs") },
   ];
 
-  const desktopLinks = [
-    { href: "/#newsletter", label: t("newsletter") },
-    { href: "/labs", label: `✨ ${t("labs")}` },
-    { href: "/feedback", label: `💬 ${t("feedback")}` },
-  ];
 
   const bottomTabs = [
     { href: "/labs", label: t("labs"), icon: "✨" },
@@ -82,7 +129,8 @@ export default function Nav() {
       {/* ─────────────────────────────────────────
           Desktop GNB  (lg and above)
       ───────────────────────────────────────── */}
-      <nav className="hidden lg:block sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100">
+      <nav ref={desktopNavRef} className="hidden lg:block sticky top-0 z-50 bg-white border-b border-gray-100">
+        {/* Top bar */}
         <div className="max-w-screen-xl mx-auto px-6 h-16 flex items-center gap-6">
           <Link href="/" className="flex items-center hover:opacity-70 transition-opacity flex-shrink-0">
             <Image
@@ -95,18 +143,42 @@ export default function Nav() {
             />
           </Link>
 
+          {/* Page links */}
           <div className="flex items-center gap-5 ml-2">
-            {desktopLinks.map(({ href, label }) => (
-              <Link
-                key={label}
-                href={href}
-                className={`text-sm font-bold transition-colors whitespace-nowrap ${
-                  pathname === href ? "text-black" : "text-gray-400 hover:text-black"
-                }`}
-              >
-                {label}
-              </Link>
-            ))}
+            <Link
+              href="/admin"
+              className={`text-sm font-bold transition-colors whitespace-nowrap ${
+                pathname === "/admin" ? "text-black" : "text-gray-400 hover:text-black"
+              }`}
+            >
+              ⚙️ {t("admin")}
+            </Link>
+            <Link
+              href="/labs"
+              className={`text-sm font-bold transition-colors whitespace-nowrap ${
+                pathname === "/labs" ? "text-black" : "text-gray-400 hover:text-black"
+              }`}
+            >
+              ✨ {t("labs")}
+            </Link>
+            <Link
+              href="/"
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+              className={`text-sm font-bold transition-colors whitespace-nowrap ${
+                isHome ? "text-black" : "text-gray-400 hover:text-black"
+              }`}
+            >
+              {t("newsletter")}
+            </Link>
+            <Link
+              href="/feedback"
+              className={`text-sm font-bold transition-colors whitespace-nowrap ${
+                pathname === "/feedback" ? "text-black" : "text-gray-400 hover:text-black"
+              }`}
+            >
+              💬 {t("feedback")}
+            </Link>
           </div>
 
           <span className="flex-1" />
@@ -141,12 +213,46 @@ export default function Nav() {
             </Link>
           )}
         </div>
+
+        {/* Category tab bar — home only & toggled */}
+        {isHome && isCategoryOpen && (
+          <div 
+            className="border-t border-gray-100 bg-white absolute w-full left-0 shadow-sm"
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+          >
+            <div className="max-w-screen-xl mx-auto px-6">
+              <div className="flex items-center gap-0 overflow-x-auto scrollbar-hide">
+                {CATEGORIES_KO.map((cat, i) => {
+                  const label = isKo ? cat : CATEGORIES_ES[i];
+                  const isActive = cat === activeCategory || (activeCategory === "전체" && cat === "전체");
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() => handleCategoryClick(cat)}
+                      className={`relative flex-shrink-0 px-5 py-3 text-sm font-bold transition-colors cursor-pointer whitespace-nowrap ${
+                        isActive
+                          ? "text-black"
+                          : "text-gray-400 hover:text-gray-700"
+                      }`}
+                    >
+                      {label}
+                      {isActive && (
+                        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-black rounded-full" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* ─────────────────────────────────────────
           Mobile Top Header  (below lg)
       ───────────────────────────────────────── */}
-      <header className="lg:hidden sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100">
+      <header ref={mobileHeaderRef} className="lg:hidden sticky top-0 z-50 bg-white border-b border-gray-100">
         <div className="flex items-center justify-between px-4 h-14">
           <Link href="/" className="hover:opacity-70 transition-opacity">
             <Image
@@ -181,6 +287,29 @@ export default function Nav() {
             )}
           </div>
         </div>
+
+        {/* Mobile category scroll row — home only & toggled */}
+        {isHome && isCategoryOpen && (
+          <div className="flex items-center gap-2 px-4 pb-3 overflow-x-auto scrollbar-hide">
+            {CATEGORIES_KO.map((cat, i) => {
+              const label = isKo ? cat : CATEGORIES_ES[i];
+              const isActive = cat === activeCategory || (activeCategory === "전체" && cat === "전체");
+              return (
+                <button
+                  key={cat}
+                  onClick={() => handleCategoryClick(cat)}
+                  className={`flex-shrink-0 px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer ${
+                    isActive
+                      ? "bg-black text-white border-black"
+                      : "bg-white text-gray-500 border-gray-200 hover:border-gray-400"
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </header>
 
       {/* ─────────────────────────────────────────
@@ -208,5 +337,14 @@ export default function Nav() {
         </div>
       </nav>
     </>
+  );
+}
+
+// ── Public export wrapped in Suspense (required for useSearchParams) ────────
+export default function Nav() {
+  return (
+    <Suspense fallback={null}>
+      <NavInner />
+    </Suspense>
   );
 }
