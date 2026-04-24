@@ -7,12 +7,8 @@ import { useTranslations } from "next-intl";
 import { useLanguageStore } from "@/lib/stores/languageStore";
 import { useUserStore } from "@/lib/stores/userStore";
 import { useState, Suspense, useEffect, useRef } from "react";
+import { CATEGORIES_KO, CATEGORIES_ES } from "@/lib/categories";
 
-// ── Category data (mirrored from page.tsx) ──────────────────────────────────
-const CATEGORIES_KO = ["전체", "K-POP", "드라마", "뉴스", "문화", "스포츠", "음식"] as const;
-const CATEGORIES_ES = ["Todos", "K-POP", "Drama", "Noticias", "Cultura", "Deportes", "Comida"];
-
-// ── Inner component that reads searchParams ─────────────────────────────────
 function NavInner() {
   const pathname = usePathname();
   const router = useRouter();
@@ -29,12 +25,11 @@ function NavInner() {
     setSearchValue(searchParams.get("q") ?? "");
   }, [searchParams]);
 
+  // Close search on outside click
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       const target = event.target as Node;
-      if (
-        mobileHeaderRef.current && !mobileHeaderRef.current.contains(target)
-      ) {
+      if (mobileHeaderRef.current && !mobileHeaderRef.current.contains(target)) {
         setIsSearchOpen(false);
       }
     }
@@ -44,14 +39,23 @@ function NavInner() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isSearchOpen]);
 
+  // Close lang dropdown on Escape
+  useEffect(() => {
+    if (!isLangOpen) return;
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setIsLangOpen(false);
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isLangOpen]);
+
   const isHome = pathname === "/";
   const isKo = language === "ko";
-
   const activeCategory = searchParams.get("category") ?? "전체";
 
   function handleCategoryClick(cat: string) {
     const params = new URLSearchParams(searchParams.toString());
-    if (cat === "전체" || cat === "Todos") {
+    if (cat === "전체") {
       params.delete("category");
     } else {
       params.set("category", cat);
@@ -81,11 +85,10 @@ function NavInner() {
     { code: "es" as const, label: t("langEs") },
   ];
 
-
   const bottomTabs = [
+    { href: "/", label: t("home"), icon: "🏠" },
     { href: "/labs", label: t("labs"), icon: "✨" },
     { href: "/feedback", label: t("feedback"), icon: "💬" },
-    { href: "/admin", label: t("admin"), icon: "⚙️" },
     { href: isLoggedIn ? "/mypage" : "/login", label: isLoggedIn ? t("mypage") : t("login"), icon: "👤" },
   ];
 
@@ -93,6 +96,9 @@ function NavInner() {
     <div className="relative">
       <button
         onClick={() => setIsLangOpen(!isLangOpen)}
+        aria-expanded={isLangOpen}
+        aria-haspopup="listbox"
+        aria-label={t("selectLang")}
         className="flex items-center gap-1.5 px-3 py-2 rounded-full border border-gray-200 text-sm font-bold hover:bg-gray-50 transition-colors cursor-pointer group"
       >
         <span className="text-base leading-none">🌐</span>
@@ -104,6 +110,8 @@ function NavInner() {
         <>
           <div className="fixed inset-0 z-40" onClick={() => setIsLangOpen(false)} />
           <div
+            role="listbox"
+            aria-label={t("selectLang")}
             className={`absolute top-full mt-2 z-50 bg-white/95 backdrop-blur-xl border border-gray-100 rounded-2xl shadow-2xl min-w-[180px] p-2 animate-in fade-in zoom-in-95 duration-200 ${align === "right" ? "right-0" : "left-0"}`}
           >
             <div className="px-3 py-1.5 text-[11px] text-gray-400 font-bold uppercase tracking-widest">
@@ -113,6 +121,8 @@ function NavInner() {
             {langs.map(({ code, label }) => (
               <button
                 key={code}
+                role="option"
+                aria-selected={language === code}
                 onClick={() => { setLanguage(code); setIsLangOpen(false); }}
                 className={`w-full flex justify-between items-center px-3 py-2.5 rounded-xl text-sm transition-all cursor-pointer ${
                   language === code ? "bg-black text-white font-bold" : "text-gray-600 hover:bg-gray-50 font-medium"
@@ -151,12 +161,13 @@ function NavInner() {
             {/* Search Bar */}
             <form onSubmit={handleSearch} className="relative group">
               <div className="relative flex items-center">
-                <span className="absolute left-3.5 text-gray-400 text-sm group-focus-within:text-black transition-colors">🔍</span>
+                <span className="absolute left-3.5 text-gray-400 text-sm group-focus-within:text-black transition-colors" aria-hidden="true">🔍</span>
                 <input
                   type="text"
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
                   placeholder={t("search")}
+                  aria-label={t("search")}
                   className="w-48 xl:w-64 pl-10 pr-4 py-2 bg-gray-50 border border-gray-100 rounded-full text-xs focus:bg-white focus:border-black transition-all outline-none placeholder:text-gray-400"
                 />
               </div>
@@ -169,6 +180,7 @@ function NavInner() {
                 <div className="flex items-center gap-3">
                   <Link href="/mypage">
                     <div
+                      aria-label={t("mypage")}
                       className={`w-9 h-9 rounded-full flex items-center justify-center text-lg border-2 transition-all cursor-pointer shadow-sm hover:scale-105 ${
                         pathname === "/mypage" ? "border-black" : "border-transparent"
                       }`}
@@ -196,7 +208,7 @@ function NavInner() {
           </div>
         </div>
 
-        {/* Persistent Secondary Nav Bar (Colored for distinction) */}
+        {/* Persistent Secondary Nav Bar */}
         <div className="bg-gray-50/80 backdrop-blur-md border-b border-gray-100">
           <div className="max-w-screen-xl mx-auto px-6 h-12 flex items-center justify-between">
             {/* Left: Categories (Home only) */}
@@ -208,10 +220,9 @@ function NavInner() {
                   <button
                     key={cat}
                     onClick={() => handleCategoryClick(cat)}
+                    aria-pressed={isActive}
                     className={`relative flex-shrink-0 px-5 py-3 text-sm font-bold transition-colors cursor-pointer whitespace-nowrap ${
-                      isActive
-                        ? "text-black"
-                        : "text-gray-400 hover:text-gray-700"
+                      isActive ? "text-black" : "text-gray-400 hover:text-gray-700"
                     }`}
                   >
                     {label}
@@ -223,7 +234,7 @@ function NavInner() {
               })}
             </div>
 
-            {/* Right: Utility Links (Always visible) */}
+            {/* Right: Utility Links */}
             <div className="flex items-center gap-1 xl:gap-2 ml-4">
               {[
                 { href: "/admin", label: t("admin"), icon: "⚙️" },
@@ -239,7 +250,7 @@ function NavInner() {
                       isActive ? "text-black font-black" : "text-gray-500 font-bold hover:text-black"
                     }`}
                   >
-                    <span className="text-sm opacity-80">{link.icon}</span>
+                    <span className="text-sm opacity-80" aria-hidden="true">{link.icon}</span>
                     <span>{link.label}</span>
                   </Link>
                 );
@@ -267,8 +278,9 @@ function NavInner() {
                 />
               </Link>
               <div className="flex items-center gap-3">
-                <button 
+                <button
                   onClick={() => setIsSearchOpen(true)}
+                  aria-label={isKo ? "검색" : "Buscar"}
                   className="text-xl p-1 text-gray-600 cursor-pointer"
                 >
                   🔍
@@ -277,6 +289,7 @@ function NavInner() {
                 {isLoggedIn && user ? (
                   <Link href="/mypage">
                     <div
+                      aria-label={t("mypage")}
                       className={`w-8 h-8 rounded-full flex items-center justify-center text-base border-2 cursor-pointer ${
                         pathname === "/mypage" ? "border-black" : "border-transparent"
                       }`}
@@ -304,12 +317,14 @@ function NavInner() {
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
                   placeholder={t("search")}
+                  aria-label={t("search")}
                   className="w-full pl-10 pr-4 py-2 bg-gray-100 border-none rounded-full text-sm outline-none"
                 />
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm" aria-hidden="true">🔍</span>
               </form>
-              <button 
+              <button
                 onClick={() => setIsSearchOpen(false)}
+                aria-label={isKo ? "검색 닫기" : "Cerrar búsqueda"}
                 className="text-xs font-bold text-gray-500 px-2"
               >
                 {isKo ? "취소" : "Cancelar"}
@@ -318,7 +333,7 @@ function NavInner() {
           )}
         </div>
 
-        {/* Mobile category scroll row — always visible on home */}
+        {/* Mobile category scroll row */}
         {isHome && (
           <div className="flex items-center gap-2 px-4 py-2 overflow-x-auto scrollbar-hide border-t border-gray-100">
             {CATEGORIES_KO.map((cat, i) => {
@@ -328,6 +343,7 @@ function NavInner() {
                 <button
                   key={cat}
                   onClick={() => handleCategoryClick(cat)}
+                  aria-pressed={isActive}
                   className={`flex-shrink-0 px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer ${
                     isActive
                       ? "bg-black text-white border-black shadow-md shadow-black/10"
@@ -345,7 +361,7 @@ function NavInner() {
       {/* ─────────────────────────────────────────
           Mobile Bottom Tab Bar  (below lg)
       ───────────────────────────────────────── */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-t border-gray-100/50 shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
+      <nav aria-label={isKo ? "주요 메뉴" : "Menú principal"} className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-t border-gray-100/50 shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
         <div className="flex items-center justify-around h-16 pb-safe">
           {bottomTabs.map(({ href, label, icon }) => {
             const isActive = href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -353,9 +369,10 @@ function NavInner() {
               <Link
                 key={href}
                 href={href}
+                aria-current={isActive ? "page" : undefined}
                 className="flex flex-col items-center gap-1 flex-1 py-2 min-w-0 transition-all active:scale-95"
               >
-                <span className={`text-xl transition-all duration-300 ${isActive ? "scale-110 opacity-100" : "opacity-30 grayscale"}`}>
+                <span className={`text-xl transition-all duration-300 ${isActive ? "scale-110 opacity-100" : "opacity-30 grayscale"}`} aria-hidden="true">
                   {icon}
                 </span>
                 <span className={`text-[10px] font-bold truncate max-w-full px-1 transition-colors ${isActive ? "text-black" : "text-gray-400"}`}>
@@ -373,7 +390,6 @@ function NavInner() {
   );
 }
 
-// ── Public export wrapped in Suspense (required for useSearchParams) ────────
 export default function Nav() {
   return (
     <Suspense fallback={null}>

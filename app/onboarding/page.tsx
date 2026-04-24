@@ -90,7 +90,7 @@ export default function OnboardingPage() {
         {/* Avatar grid */}
         <div className="mb-6">
           <label className="block text-sm font-bold mb-2">{t("avatarLabel")}</label>
-          <div className="grid grid-cols-6 gap-2">
+          <div className="grid grid-cols-4 gap-3">
             {AVATAR_PRESETS.map((preset) => {
               const isSelected = selectedAvatar.emoji === preset.emoji;
               return (

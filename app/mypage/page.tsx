@@ -6,7 +6,8 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useLanguageStore } from "@/lib/stores/languageStore";
 import { useUserStore, AVATAR_PRESETS } from "@/lib/stores/userStore";
-import { MOCK_CONTENTS } from "@/lib/mock-data";
+import Image from "next/image";
+import { MOCK_CONTENTS, MOCK_USER } from "@/lib/mock-data";
 
 function Avatar({ emoji, color, size = 72 }: { emoji: string; color: string; size?: number }) {
   return (
@@ -46,7 +47,7 @@ export default function MyPage() {
   const likedContents = MOCK_CONTENTS.filter((c) => user.likedContentIds.includes(c.id));
   const myComments = MOCK_CONTENTS.flatMap((c) =>
     c.comments
-      .filter((cm) => cm.userId === "u1")
+      .filter((cm) => cm.userId === MOCK_USER.id)
       .map((cm) => ({ ...cm, contentTitle: isKo ? c.title : c.titleEs, contentId: c.id }))
   );
 
@@ -212,17 +213,26 @@ export default function MyPage() {
                   <Link
                     key={c.id}
                     href={`/content/${c.id}`}
-                    className="group block border border-gray-100 bg-white rounded-xl p-4 hover:border-black transition-all duration-200"
+                    className="group flex gap-3 border border-gray-100 bg-white rounded-xl overflow-hidden hover:border-black transition-all duration-200"
                   >
-                    <div className="flex justify-between items-start mb-2">
-                      <span className="text-xs bg-gray-100 px-2 py-0.5 rounded font-semibold text-gray-500">
+                    <div className="relative w-24 h-20 flex-shrink-0">
+                      <Image
+                        src={`https://picsum.photos/seed/${c.id}/240/160`}
+                        alt={isKo ? c.title : c.titleEs}
+                        fill
+                        sizes="96px"
+                        className="object-cover"
+                      />
+                    </div>
+                    <div className="flex flex-col justify-center gap-1 py-3 pr-3 min-w-0">
+                      <span className="text-[10px] bg-gray-100 px-2 py-0.5 rounded font-semibold text-gray-500 self-start">
                         {c.category}
                       </span>
+                      <p className="font-bold text-sm leading-snug group-hover:underline line-clamp-2">
+                        {isKo ? c.title : c.titleEs}
+                      </p>
                       <span className="text-xs text-gray-300">{c.publishedAt}</span>
                     </div>
-                    <p className="font-bold text-sm leading-snug group-hover:underline line-clamp-2">
-                      {isKo ? c.title : c.titleEs}
-                    </p>
                   </Link>
                 ))}
               </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useLanguageStore } from "@/lib/stores/languageStore";
 
@@ -60,67 +61,75 @@ const LABS_DATA = [
 
 export default function LabsPage() {
   const t = useTranslations("labs");
+  const router = useRouter();
   const { language } = useLanguageStore();
   const isKo = language === "ko";
 
   return (
-    <div className="py-10 md:py-16">
+    <div className="py-8 sm:py-10 md:py-16">
       {/* Hero */}
-      <div className="text-center mb-14 animate-fade-in-down">
-        <span className="inline-block bg-gray-100 text-black text-xs font-black tracking-widest px-5 py-2 rounded-full mb-5">
+      <div className="text-center mb-10 sm:mb-14 animate-fade-in-down">
+        <span className="inline-block bg-gray-100 text-black text-xs font-black tracking-widest px-4 sm:px-5 py-2 rounded-full mb-4 sm:mb-5">
           {t("badge")}
         </span>
-        <h1 className="text-3xl md:text-5xl font-black mb-4 tracking-tight">
+        <h1 className="text-2xl sm:text-3xl md:text-5xl font-black mb-3 sm:mb-4 tracking-tight">
           {t("title")}
         </h1>
-        <p className="text-gray-500 text-base md:text-lg max-w-2xl mx-auto leading-relaxed">
+        <p className="text-gray-500 text-sm sm:text-base md:text-lg max-w-2xl mx-auto leading-relaxed px-4">
           {t("subtitle")}
         </p>
       </div>
 
       {/* Card grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-20">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-12 sm:mb-20">
         {LABS_DATA.map((project, idx) => (
           <div
             key={idx}
-            className="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:-translate-y-3 hover:shadow-2xl transition-all duration-300 cursor-pointer"
+            className="bg-white rounded-2xl sm:rounded-3xl overflow-hidden border border-gray-100 shadow-sm"
           >
             {/* Gradient banner */}
-            <div className={`h-48 bg-gradient-to-br ${project.gradient} flex items-center justify-center relative`}>
-              <div className="w-20 h-20 bg-white/25 backdrop-blur rounded-2xl flex items-center justify-center text-4xl border border-white/30">
+            <div
+              className={`h-36 sm:h-48 bg-gradient-to-br ${project.gradient} flex items-center justify-center relative`}
+            >
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white/25 backdrop-blur rounded-xl sm:rounded-2xl flex items-center justify-center text-3xl sm:text-4xl border border-white/30">
                 {project.icon}
               </div>
-              <span className="absolute top-4 right-4 bg-black/15 text-white text-xs font-black px-3 py-1.5 rounded-full backdrop-blur">
+              <span className="absolute top-3 right-3 sm:top-4 sm:right-4 bg-black/15 text-white text-xs font-black px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full backdrop-blur">
                 {project.tag}
+              </span>
+              {/* Coming Soon badge */}
+              <span className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 bg-white/20 backdrop-blur-sm text-white text-[10px] sm:text-xs font-bold px-2.5 py-1 rounded-full border border-white/30">
+                {isKo ? "출시 예정" : "Próximamente"}
               </span>
             </div>
 
             {/* Content */}
-            <div className="p-6">
-              <h3 className="text-xl font-black mb-3 leading-snug">
+            <div className="p-4 sm:p-6">
+              <h3 className="text-base sm:text-xl font-black mb-2 sm:mb-3 leading-snug">
                 {isKo ? project.ko.title : project.es.title}
               </h3>
-              <p className="text-sm text-gray-500 leading-relaxed mb-5">
+              <p className="text-xs sm:text-sm text-gray-500 leading-relaxed">
                 {isKo ? project.ko.desc : project.es.desc}
               </p>
-              <div className="flex justify-end">
-                <div className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center font-bold text-sm hover:bg-black hover:text-white transition-colors">
-                  →
-                </div>
-              </div>
             </div>
           </div>
         ))}
       </div>
 
       {/* CTA */}
-      <div className="bg-black text-white rounded-3xl md:rounded-[40px] p-8 md:p-14 text-center relative overflow-hidden">
-        {/* Decorative glow */}
+      <div className="bg-black text-white rounded-2xl sm:rounded-3xl md:rounded-[40px] p-6 sm:p-8 md:p-14 text-center relative overflow-hidden">
         <div className="absolute -top-1/2 -right-10 w-80 h-80 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10">
-          <h2 className="text-2xl md:text-3xl font-black mb-3">{t("ctaTitle")}</h2>
-          <p className="text-gray-400 text-sm md:text-base mb-8 max-w-lg mx-auto">{t("ctaDesc")}</p>
-          <button className="px-8 py-3.5 bg-white text-black rounded-2xl font-black text-sm hover:bg-gray-100 transition-colors cursor-pointer">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-black mb-2 sm:mb-3">
+            {t("ctaTitle")}
+          </h2>
+          <p className="text-gray-400 text-sm md:text-base mb-6 sm:mb-8 max-w-lg mx-auto">
+            {t("ctaDesc")}
+          </p>
+          <button
+            onClick={() => router.push("/feedback?category=feature")}
+            className="px-6 sm:px-8 py-3 sm:py-3.5 bg-white text-black rounded-xl sm:rounded-2xl font-black text-sm hover:bg-gray-100 transition-colors cursor-pointer active:scale-95"
+          >
             {t("ctaBtn")}
           </button>
         </div>

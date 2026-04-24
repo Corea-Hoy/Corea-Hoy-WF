@@ -39,9 +39,7 @@ export default function FeedbackPage() {
       submittedAt: new Date().toISOString(),
     };
     
-    console.log("Submitting Feedback:", feedbackPayload); // 테스트용 로그
-
-    alert("등록되었습니다.");
+    void feedbackPayload;
     setSubmitted(true);
   }
 
@@ -93,6 +91,7 @@ export default function FeedbackPage() {
               <section>
                 <label className="block text-sm font-bold text-gray-800 mb-4">
                   {isKo ? "어떤 부분에 대한 의견이신가요?" : "¿Sobre qué es tu opinión?"}
+                  <span className="text-red-500 ml-1" aria-hidden="true">*</span>
                 </label>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {categories.map((cat) => {
@@ -147,6 +146,7 @@ export default function FeedbackPage() {
               <section>
                 <label className="block text-sm font-bold text-gray-800 mb-3">
                   {isKo ? "자세한 내용을 들려주세요" : "Cuéntanos más detalles"}
+                  <span className="text-red-500 ml-1" aria-hidden="true">*</span>
                 </label>
                 <div className="relative group">
                   <textarea

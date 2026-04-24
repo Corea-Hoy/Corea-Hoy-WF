@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 
 interface Slide {
@@ -43,21 +43,43 @@ const SLIDES: Slide[] = [
 ];
 
 const INTERVAL = 4000;
+const MIN_SWIPE = 40;
 
-export default function KoreaCarousel({ isKo, fullHeight = false }: { isKo: boolean; fullHeight?: boolean }) {
+export default function KoreaCarousel({
+  isKo,
+  fullHeight = false,
+}: {
+  isKo: boolean;
+  fullHeight?: boolean;
+}) {
   const [current, setCurrent] = useState(0);
   const [paused, setPaused] = useState(false);
+  const touchStartX = useRef<number | null>(null);
 
-  const prev = useCallback(() =>
-    setCurrent((c) => (c - 1 + SLIDES.length) % SLIDES.length), []);
-  const next = useCallback(() =>
-    setCurrent((c) => (c + 1) % SLIDES.length), []);
+  const prev = useCallback(
+    () => setCurrent((c) => (c - 1 + SLIDES.length) % SLIDES.length),
+    []
+  );
+  const next = useCallback(
+    () => setCurrent((c) => (c + 1) % SLIDES.length),
+    []
+  );
 
   useEffect(() => {
     if (paused) return;
     const id = setInterval(next, INTERVAL);
     return () => clearInterval(id);
   }, [paused, next]);
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const delta = touchStartX.current - e.changedTouches[0].clientX;
+    if (Math.abs(delta) >= MIN_SWIPE) delta > 0 ? next() : prev();
+    touchStartX.current = null;
+  };
 
   return (
     <div
@@ -67,6 +89,8 @@ export default function KoreaCarousel({ isKo, fullHeight = false }: { isKo: bool
       style={fullHeight ? undefined : { height: "340px" }}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
     >
       {/* Slides */}
       {SLIDES.map((slide, i) => (
@@ -77,17 +101,15 @@ export default function KoreaCarousel({ isKo, fullHeight = false }: { isKo: bool
         >
           <Image
             src={slide.src}
-            alt={slide.labelKo}
+            alt={isKo ? slide.labelKo : slide.labelEs}
             fill
             className="object-cover"
             sizes="100vw"
             priority={i === 0}
           />
-          {/* Dark overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-          {/* Label */}
-          <div className="absolute bottom-5 left-6 z-10">
-            <span className="text-white text-sm font-semibold drop-shadow-lg">
+          <div className="absolute bottom-5 left-4 sm:left-6 z-10">
+            <span className="text-white text-xs sm:text-sm font-semibold drop-shadow-lg">
               {isKo ? slide.labelKo : slide.labelEs}
             </span>
           </div>
@@ -97,8 +119,8 @@ export default function KoreaCarousel({ isKo, fullHeight = false }: { isKo: bool
       {/* Prev button */}
       <button
         onClick={prev}
-        aria-label="이전"
-        className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-black/30 hover:bg-black/50 text-white flex items-center justify-center transition-all cursor-pointer backdrop-blur-sm"
+        aria-label={isKo ? "이전 슬라이드" : "Diapositiva anterior"}
+        className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 z-10 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-black/30 hover:bg-black/50 text-white flex items-center justify-center transition-all cursor-pointer backdrop-blur-sm"
       >
         ‹
       </button>
@@ -106,23 +128,21 @@ export default function KoreaCarousel({ isKo, fullHeight = false }: { isKo: bool
       {/* Next button */}
       <button
         onClick={next}
-        aria-label="다음"
-        className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-black/30 hover:bg-black/50 text-white flex items-center justify-center transition-all cursor-pointer backdrop-blur-sm"
+        aria-label={isKo ? "다음 슬라이드" : "Diapositiva siguiente"}
+        className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 z-10 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-black/30 hover:bg-black/50 text-white flex items-center justify-center transition-all cursor-pointer backdrop-blur-sm"
       >
         ›
       </button>
 
-      {/* Dot indicators */}
-      <div className="absolute bottom-4 right-6 z-10 flex items-center gap-1.5">
+      {/* Dot indicators — centered bottom */}
+      <div className="absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5">
         {SLIDES.map((_, i) => (
           <button
             key={i}
             onClick={() => setCurrent(i)}
-            aria-label={`슬라이드 ${i + 1}`}
+            aria-label={isKo ? `슬라이드 ${i + 1}` : `Diapositiva ${i + 1}`}
             className={`rounded-full transition-all cursor-pointer ${
-              i === current
-                ? "w-5 h-2 bg-white"
-                : "w-2 h-2 bg-white/50 hover:bg-white/80"
+              i === current ? "w-5 h-2 bg-white" : "w-2 h-2 bg-white/50 hover:bg-white/80"
             }`}
           />
         ))}
@@ -130,8 +150,9 @@ export default function KoreaCarousel({ isKo, fullHeight = false }: { isKo: bool
 
       {/* Pause indicator */}
       {paused && (
-        <div className="absolute top-3 right-4 z-10 text-[10px] text-white/60 font-semibold tracking-wider">
-          ❚❚
+        <div className="absolute top-3 right-3 z-10 flex items-center gap-0.5 bg-black/40 backdrop-blur-sm px-2 py-1.5 rounded-full">
+          <span className="w-0.5 h-3 bg-white/90 rounded-full" />
+          <span className="w-0.5 h-3 bg-white/90 rounded-full ml-0.5" />
         </div>
       )}
     </div>
